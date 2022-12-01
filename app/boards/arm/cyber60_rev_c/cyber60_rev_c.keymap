@@ -15,15 +15,15 @@
 	// ------------------------------------------------------------------------------------------
 	// | ESC |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  0  |  -  |  =  |   BKSP   |
 	// |  TAB |  Q  |  W  |  E  |  R  |  T  |  Y  |  U  |  I  |  O  |  P  |  [  |  ]  |   "|"   |
-	// | CAPS  |  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  ;  |  '  |none| ENTER   |
-	// | SHIFT |none| Z |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  /  |    Shift   | FN |
+	// | CAPS  |  A  |  S  |  D  |  F  |  G  |  H  |  J  |  K  |  L  |  ;  |  '  |NUHS| ENTER   |
+	// | SHIFT |NUBS| Z |  X  |  C  |  V  |  B  |  N  |  M  |  ,  |  .  |  /  |    Shift   | FN |
 	// |  LCTL  |  LWIN  |  LALT  | SPACE  | SPACE |    SPACE   |  RALT | FN  |   RWIN  | RCTRL |
 	// | Rotary | (<-- Rotary switch) ----------------------------------------------------------- 
 				bindings = <
 	&kp ESC		 &kp NUM_1 	&kp NUM_2	&kp NUM_3 	&kp NUM_4 &kp NUM_5 &kp NUM_6 	&kp NUM_7 	&kp NUM_8 &kp NUM_9	&kp NUM_0	&kp MINUS	&kp EQL  	&kp BSLH	&kp GRAVE
 	&kp TAB		 &kp   Q   	&kp   W   	&kp   E   	&kp   R   &kp   T   &kp   Y   	&kp   U   	&kp   I   &kp   O   &kp   P   	&kp LBKT 	&kp RBKT	&kp BKSP
-	&kp LCTL 	 &kp   A   	&kp   S   	&kp   D   	&kp   F   &kp   G   &kp   H   	&kp   J   	&kp   K   &kp   L   &kp  SCLN  	&kp  QUOT   &none		&kp RET
-	&kp LSFT 	 &none		&kp   Z   	&kp   X   	&kp   C   &kp   V   &kp   B   	&kp   N   	&kp   M   &kp  CMMA &kp  DOT  	&kp  FSLH	&kp RSFT 	&mo FN1
+	&kp LCTL 	 &kp   A   	&kp   S   	&kp   D   	&kp   F   &kp   G   &kp   H   	&kp   J   	&kp   K   &kp   L   &kp  SCLN  	&kp  QUOT   &kp NUHS	&kp RET
+	&kp LSFT 	 &kp NUBS	&kp   Z   	&kp   X   	&kp   C   &kp   V   &kp   B   	&kp   N   	&kp   M   &kp  CMMA &kp  DOT  	&kp  FSLH	&kp RSFT 	&mo FN1
 	&kp LCTL 	 &kp LGUI   &kp   LALT				&kp SPC		&mo FN1			&mt RALT SPC  			  &none &kp  RALT 	&kp RGUI	&kp  RCTL		
 	&kp C_PP
 			>;
@@ -34,8 +34,8 @@
 	// ------------------------------------------------------------------------------------------
 	// | BOOT |  F1 |  F2 |  F3 |  F4 |  F5 |  F6 |  F7 |  F8 |  F9 | F10 | F11 | F12 |INS | RST|
 	// | TAB  |BTPRV|  UP |BTNXT| TOG0| TOG1| TOG2| BT3 | BT4 | PRNT| SLCKL | UP  | LOCK |  DEL |
-	// | CAPS  |LEFT |DOWN |RIGHT|MUTE |  G  |  *  |  /  | HOME| PGUP| LEFT|RIGHT|none|  ENTER  |
-	// | SHIFT |none|PRV|PLAYP|NEXT | VOLD| VOLU|  +  |  -  | END | PGDN| DOWN|    Shift   | FN |
+	// | CAPS  |LEFT |DOWN |RIGHT|MUTE |  G  |  *  |  /  | HOME| PGUP| LEFT|RIGHT|NUHS|  ENTER  |
+	// | SHIFT |NUBS|PRV|PLAYP|NEXT | VOLD| VOLU|  +  |  -  | END | PGDN| DOWN|    Shift   | FN |
 	// |  LCTL  |  LGUI  |  LWIN  |  RALT  | FN |     SPACE     |  RALT |  RWIN | RMENU | RCTRL |
 	// | Rotary | (<-- Rotary switch) ----------------------------------------------------------- 
 			bindings = <
