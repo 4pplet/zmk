@@ -18,12 +18,11 @@ The Mod-Morph behavior acts as one of two keycodes, depending on if the required
 
 An example of how to implement the mod-morph "Grave Escape":
 
-```
+```dts
 / {
     behaviors {
         gresc: grave_escape {
             compatible = "zmk,behavior-mod-morph";
-            label = "GRAVE_ESCAPE";
             #binding-cells = <0>;
             bindings = <&kp ESC>, <&kp GRAVE>;
             mods = <(MOD_LGUI|MOD_LSFT|MOD_RGUI|MOD_RSFT)>;
@@ -41,7 +40,7 @@ Note that this specific mod-morph exists in ZMK by default using code `&gresc`.
 
 Example:
 
-```
+```dts
 &gresc
 ```
 
@@ -62,11 +61,11 @@ Available Modifiers:
 
 Example:
 
-```
+```dts
 mods = <(MOD_LGUI|MOD_LSFT|MOD_RGUI|MOD_RSFT)>;
 ```
 
-### Advanced configuration
+### Advanced Configuration
 
 `keep-mods`
 
@@ -74,12 +73,11 @@ When a modifier specified in `mods` is being held, it won't be sent along with t
 
 For example, the following configuration morphs `LEFT_SHIFT` + `BACKSPACE` into `DELETE`, and morphs `RIGHT_SHIFT` + `BACKSPACE` into `RIGHT_SHIFT` + `DELETE`.
 
-```
+```dts
 / {
     behaviors {
         bspc_del: backspace_delete {
             compatible = "zmk,behavior-mod-morph";
-            label = "BACKSPACE_DELETE";
             #binding-cells = <0>;
             bindings = <&kp BACKSPACE>, <&kp DELETE>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
@@ -88,3 +86,9 @@ For example, the following configuration morphs `LEFT_SHIFT` + `BACKSPACE` into 
     };
 };
 ```
+
+:::note[Karabiner-Elements (macOS) interfering with mod-morphs]
+
+If the first modified key press sends the modifier along with the morphed keycode and [Karabiner-Elements](https://karabiner-elements.pqrs.org/) is running, disable the "Modify Events" toggle from Karabiner's "Devices" settings page for the keyboard running ZMK.
+
+:::

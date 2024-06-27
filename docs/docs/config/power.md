@@ -24,6 +24,18 @@ Definition file: [zmk/app/Kconfig](https://github.com/zmkfirmware/zmk/blob/main/
 | `CONFIG_ZMK_SLEEP`              | bool | Enable deep sleep support                             | n       |
 | `CONFIG_ZMK_IDLE_SLEEP_TIMEOUT` | int  | Milliseconds of inactivity before entering deep sleep | 900000  |
 
+## Soft Off
+
+The [soft off feature](../features/soft-off.md) allows turning the keyboard on/off from either dedicated hardware, or using the [`&soft_off` behavior](../behaviors/soft-off.md) to turn off and a reset button to turn back on again.
+
+### Kconfig
+
+Definition file: [zmk/app/Kconfig](https://github.com/zmkfirmware/zmk/blob/main/app/Kconfig)
+
+| Config                   | Type | Description                                                         | Default |
+| ------------------------ | ---- | ------------------------------------------------------------------- | ------- |
+| `CONFIG_ZMK_PM_SOFT_OFF` | bool | Enable soft off functionality from the keymap or dedicated hardware | n       |
+
 ## External Power Control
 
 Driver for enabling or disabling power to peripherals such as displays and lighting. This driver must be configured to use [power management behaviors](../behaviors/power.md).
@@ -42,6 +54,5 @@ Applies to: `compatible = "zmk,ext-power-generic"`
 
 | Property        | Type       | Description                                                   |
 | --------------- | ---------- | ------------------------------------------------------------- |
-| `label`         | string     | Unique label for the node                                     |
 | `control-gpios` | GPIO array | List of GPIOs which should be active to enable external power |
 | `init-delay-ms` | int        | number of milliseconds to delay after initializing the driver |

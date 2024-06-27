@@ -6,9 +6,9 @@
 
 #define DT_DRV_COMPAT zmk_behavior_caps_word
 
-#include <device.h>
+#include <zephyr/device.h>
 #include <drivers/behavior.h>
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 #include <zmk/behavior.h>
 
 #include <zmk/endpoints.h>
@@ -55,7 +55,7 @@ static void deactivate_caps_word(const struct device *dev) {
 
 static int on_caps_word_binding_pressed(struct zmk_behavior_binding *binding,
                                         struct zmk_behavior_binding_event event) {
-    const struct device *dev = device_get_binding(binding->behavior_dev);
+    const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
     struct behavior_caps_word_data *data = dev->data;
 
     if (data->active) {
@@ -166,9 +166,10 @@ static int behavior_caps_word_init(const struct device *dev) {
 #define CAPS_WORD_LABEL(i, _n) DT_INST_LABEL(i)
 
 #define PARSE_BREAK(i)                                                                             \
-    {.page = ZMK_HID_USAGE_PAGE(i),                                                                \
-     .id = ZMK_HID_USAGE_ID(i),                                                                    \
-     .implicit_modifiers = SELECT_MODS(i)},
+    {                                                                                              \
+        .page = ZMK_HID_USAGE_PAGE(i), .id = ZMK_HID_USAGE_ID(i),                                  \
+        .implicit_modifiers = SELECT_MODS(i)                                                       \
+    }
 
 #define BREAK_ITEM(i, n) PARSE_BREAK(DT_INST_PROP_BY_IDX(n, continue_list, i))
 
@@ -177,12 +178,12 @@ static int behavior_caps_word_init(const struct device *dev) {
     static struct behavior_caps_word_config behavior_caps_word_config_##n = {                      \
         .index = n,                                                                                \
         .mods = DT_INST_PROP_OR(n, mods, MOD_LSFT),                                                \
-        .continuations = {UTIL_LISTIFY(DT_INST_PROP_LEN(n, continue_list), BREAK_ITEM, n)},        \
+        .continuations = {LISTIFY(DT_INST_PROP_LEN(n, continue_list), BREAK_ITEM, (, ), n)},       \
         .continuations_count = DT_INST_PROP_LEN(n, continue_list),                                 \
     };                                                                                             \
-    DEVICE_DT_INST_DEFINE(n, behavior_caps_word_init, NULL, &behavior_caps_word_data_##n,          \
-                          &behavior_caps_word_config_##n, APPLICATION,                             \
-                          CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_caps_word_driver_api);
+    BEHAVIOR_DT_INST_DEFINE(n, behavior_caps_word_init, NULL, &behavior_caps_word_data_##n,        \
+                            &behavior_caps_word_config_##n, POST_KERNEL,                           \
+                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &behavior_caps_word_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(KP_INST)
 

@@ -9,9 +9,9 @@
 / {
     chosen {
         zmk,kscan = &kscan0;
-        zmk,matrix_transform = &default_transform;
-	/delete-property/ zephyr,console;
-	/delete-property/ zephyr,shell-uart;
+        zmk,matrix-transform = &default_transform;
+    /delete-property/ zephyr,console;
+    /delete-property/ zephyr,shell-uart;
     };
 
     default_transform: keymap_transform_0 {
@@ -29,7 +29,8 @@
 
     kscan0: kscan_0 {
         compatible = "zmk,kscan-gpio-matrix";
-        label = "KSCAN";
+        wakeup-source;
+
         diode-direction = "row2col";
 
         col-gpios
@@ -49,9 +50,8 @@
             , <&xiao_d 5 GPIO_ACTIVE_HIGH>
             ;
     };
-    
+
 };
 
 &xiao_spi { status = "disabled"; };
-&xiao_i2c { status = "disabled"; };
 &xiao_serial { status = "disabled"; };

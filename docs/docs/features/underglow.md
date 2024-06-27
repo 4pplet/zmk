@@ -6,7 +6,7 @@ sidebar_label: RGB Underglow
 RGB underglow is a feature used to control "strips" of RGB LEDs. Most of the time this is called underglow and creates a glow underneath the board using a ring of LEDs around the edge, hence the name. However, this can be extended to be used to control anything from a single LED to a long string of LEDs anywhere on the keyboard.
 
 :::info
-RGB underglow can also be used for under-key lighting. If you have RGB LEDs on your keyboard, this is what you want. For PWM/single color LEDs, see [Backlight](backlight.md).
+RGB underglow can also be used for under-key lighting. If you have RGB LEDs on your keyboard, this is what you want. For PWM/single color LEDs, see [Backlight](backlight.mdx).
 :::
 
 ZMK supports all the RGB LEDs supported by Zephyr. Here's the current list supported:
@@ -28,7 +28,7 @@ Here you can see the RGB underglow feature in action using WS2812 LEDs.
 To enable RGB underglow on your board or shield, simply enable the `CONFIG_ZMK_RGB_UNDERGLOW` and `CONFIG_*_STRIP` configuration values in the `.conf` file for your board or shield.
 For example:
 
-```
+```ini
 CONFIG_ZMK_RGB_UNDERGLOW=y
 # Use the STRIP config specific to the LEDs you're using
 CONFIG_WS2812_STRIP=y
@@ -38,6 +38,20 @@ See [Configuration Overview](/docs/config) for more instructions on how to
 use Kconfig.
 
 If your board or shield does not have RGB underglow configured, refer to [Adding RGB Underglow to a Board](#adding-rgb-underglow-to-a-board).
+
+### Modifying the Number of LEDs
+
+A common issue when enabling underglow is that some of the installed LEDs do not illuminate. This can happen when a board's default underglow configuration accounts only for either the downward facing LEDs or the upward facing LEDs under each key. On a split keyboard, a good sign that this may be the problem is that the unilluminated LEDs on each half are symmetrical.
+
+The number of underglow LEDs is controlled by the `chain-length` property in the `led_strip` node. You can [change the value of this property](../config/index.md#changing-devicetree-properties) in the `<keyboard>.keymap` file by adding a stanza like this one outside of any other node (i.e. above or below the `/` node):
+
+```dts
+&led_strip {
+    chain-length = <21>;
+};
+```
+
+where the value is the total count of LEDs (per half, for split keyboards).
 
 ## Configuring RGB Underglow
 
@@ -50,31 +64,40 @@ If you have a shield with RGB underglow, you must add a `boards/` directory with
 Inside the `boards/` folder, you define a `<board>.overlay` for each different board.
 For example, the Kyria shield has a `boards/nice_nano.overlay` file that defines the RGB underglow for the `nice_nano` board specifically.
 
-### nRF52-based boards
+### nRF52-Based Boards
 
-With nRF52 boards, you can just use `&spi1` and define the pins you want to use.
-
-To identify which pin number you need to put in the config you need do to a bit of math. You need the hardware port and run it through a function.
-**32 \* X + Y** = `<Pin number>` where X is first part of the hardware port "PX.01" and Y is the second part of the hardware port "P1.Y".
-
-(_P1.13_ would give you _32 \* 1 + 13_ = `<45>` and P0.15 would give you _32 \* 0 + 15_ = `<15>`)
+With nRF52 boards, you can just use `&spi3` and define the pins you want to use.
 
 Here's an example on a definition that uses P0.06:
 
-```
+```dts
 #include <dt-bindings/led/led.h>
 
-&spi1 {
+&pinctrl {
+    spi3_default: spi3_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+        };
+    };
+
+    spi3_sleep: spi3_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_MOSI, 0, 6)>;
+            low-power-enable;
+        };
+    };
+};
+
+&spi3 {
   compatible = "nordic,nrf-spim";
   status = "okay";
-  mosi-pin = <6>;
-  // Unused pins, needed for SPI definition, but not used by the ws2812 driver itself.
-  sck-pin = <5>;
-  miso-pin = <7>;
+
+  pinctrl-0 = <&spi3_default>;
+  pinctrl-1 = <&spi3_sleep>;
+  pinctrl-names = "default", "sleep";
 
   led_strip: ws2812@0 {
     compatible = "worldsemi,ws2812-spi";
-    label = "WS2812";
 
     /* SPI */
     reg = <0>; /* ignored, but necessary for SPI bindings */
@@ -105,20 +128,19 @@ If your board/shield uses LEDs that require the data sent in a different order, 
 
 :::
 
-### Other boards
+### Other Boards
 
 For other boards, you must select an SPI definition that has the `MOSI` pin as your data pin going to your LED strip.
 
-Here's another example for a non-nRF52 board on `spi1`:
+Here's another example for a non-nRF52 board on `spi3`:
 
-```
+```dts
 #include <dt-bindings/led/led.h>
 
-&spi1 {
+&spi3 {
 
   led_strip: ws2812@0 {
     compatible = "worldsemi,ws2812-spi";
-    label = "WS2812";
 
     /* SPI */
     reg = <0>;
@@ -137,17 +159,17 @@ Here's another example for a non-nRF52 board on `spi1`:
 
 Once you have your `led_strip` properly defined you need to add it to the root devicetree node `chosen` element:
 
-```
+```dts
 / {
-	chosen {
-		zmk,underglow = &led_strip;
-	};
+    chosen {
+        zmk,underglow = &led_strip;
+    };
 };
 ```
 
 Finally you need to enable the `CONFIG_ZMK_RGB_UNDERGLOW` and `CONFIG_*_STRIP` configuration values in the `.conf` file of your board (or set a default in the `Kconfig.defconfig`):
 
-```
+```ini
 CONFIG_ZMK_RGB_UNDERGLOW=y
 # Use the STRIP config specific to the LEDs you're using
 CONFIG_WS2812_STRIP=y

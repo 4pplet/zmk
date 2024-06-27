@@ -1,4 +1,6 @@
 const path = require("path");
+const theme = require("./src/theme/prism/themes/github");
+const darkTheme = require("./src/theme/prism/themes/github-dark-dimmed");
 
 module.exports = {
   title: "ZMK Firmware",
@@ -19,6 +21,20 @@ module.exports = {
   themeConfig: {
     colorMode: {
       respectPrefersColorScheme: true,
+    },
+    prism: {
+      additionalLanguages: [
+        "bash",
+        "c",
+        "cmake",
+        "ini",
+        "linker-script",
+        "log",
+        "powershell",
+        "diff",
+      ],
+      theme,
+      darkTheme,
     },
     // sidebarCollapsible: false,
     navbar: {
@@ -41,6 +57,11 @@ module.exports = {
           position: "left",
         },
         {
+          to: "keymap-upgrader",
+          label: "Keymap Upgrader",
+          position: "left",
+        },
+        {
           href: "https://github.com/zmkfirmware/zmk",
           label: "GitHub",
           position: "right",
@@ -59,7 +80,7 @@ module.exports = {
             },
             {
               label: "Development",
-              to: "docs/development/setup/",
+              to: "docs/development/setup",
             },
           ],
         },
@@ -131,6 +152,7 @@ module.exports = {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl: "https://github.com/zmkfirmware/zmk/edit/main/docs/",
+          blogSidebarCount: "ALL",
         },
         theme: {
           customCss: [
@@ -141,4 +163,11 @@ module.exports = {
       },
     ],
   ],
+  markdown: {
+    mdx1Compat: {
+      comments: false,
+      admonitions: false,
+      headingIds: true,
+    },
+  },
 };

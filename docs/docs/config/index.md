@@ -44,7 +44,7 @@ ZMK will search the board folder for the following config files:
 
 Shared config files (excluding any `_left` or `_right` suffix) are not currently supported in board folders.
 
-For more documentation on creating and configuring a new board, see [Zephyr's board porting guide](https://docs.zephyrproject.org/latest/hardware/porting/board_porting.html#write-kconfig-files).
+For more documentation on creating and configuring a new board, see [Zephyr's board porting guide](https://docs.zephyrproject.org/3.5.0/hardware/porting/board_porting.html#write-kconfig-files).
 
 ### Shield Folder
 
@@ -63,7 +63,7 @@ ZMK will search the shield folder for the following config files:
 
 Shared config files (excluding any `_left` or `_right` suffix) are not currently supported in shield folders.
 
-For more documentation on creating and configuring a new shield, see [Zephyr's shield documentation](https://docs.zephyrproject.org/latest/hardware/porting/shields.html) and [ZMK's new keyboard shield](../development/new-shield.md) guide.
+For more documentation on creating and configuring a new shield, see [Zephyr's shield documentation](https://docs.zephyrproject.org/3.5.0/hardware/porting/shields.html) and [ZMK's new keyboard shield](../development/new-shield.mdx) guide.
 
 ## Kconfig Files
 
@@ -71,7 +71,7 @@ Kconfig is used to configure global settings such as the keyboard name and enabl
 
 Kconfig files look like this:
 
-```
+```ini
 CONFIG_ZMK_SLEEP=y
 CONFIG_EC11=y
 CONFIG_EC11_TRIGGER_GLOBAL_THREAD=y
@@ -79,7 +79,7 @@ CONFIG_EC11_TRIGGER_GLOBAL_THREAD=y
 
 The list of available settings is determined by various files in ZMK whose names start with `Kconfig`. Files ending with `_defconfig` use the same syntax, but are intended for setting configuration specific to the hardware which users typically won't need to change. Note that options are _not_ prefixed with `CONFIG_` in these files.
 
-See [Zephyr's Kconfig documentation](https://docs.zephyrproject.org/latest/build/kconfig/index.html) for more details on Kconfig files.
+See [Zephyr's Kconfig documentation](https://docs.zephyrproject.org/3.5.0/build/kconfig/index.html) for more details on Kconfig files.
 
 ### KConfig Value Types
 
@@ -114,22 +114,21 @@ Devicetree files use various file extensions. These indicate the purpose of the 
 
 Devicetree files look like this:
 
-```devicetree
+```dts
 / {
-	chosen {
-		zmk,kscan = &kscan0;
-	};
+    chosen {
+        zmk,kscan = &kscan0;
+    };
 
-	kscan0: kscan {
-		compatible = "zmk,kscan-gpio-matrix";
-		label = "KSCAN";
-	};
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-matrix";
+    };
 };
 ```
 
 Devicetree properties apply to specific nodes in the tree instead of globally. The properties that can be set for each node are determined by `.yaml` files in ZMK in the various `dts/bindings` folders.
 
-See [Zephyr's Devicetree guide](https://docs.zephyrproject.org/latest/build/dts/index.html) for more details on Devicetree files.
+See [Zephyr's Devicetree guide](https://docs.zephyrproject.org/3.5.0/build/dts/index.html) for more details on Devicetree files.
 
 ### Changing Devicetree Properties
 
@@ -138,7 +137,7 @@ search through the `.dts` file for your board, `.overlay` file for your shield, 
 
 A Devicetree node looks like this:
 
-```devicetree
+```dts
 kscan0: kscan {
     compatible = "zmk,kscan-gpio-matrix";
     // more properties and/or nodes...
@@ -150,14 +149,14 @@ The part before the colon, `kscan0`, is a label. This is optional, and it provid
 The `compatible` property indicates what type of node it is. Search this documentation for the text inside the quotes to see which properties the node
 supports. You can also search ZMK for a file whose name is the value of the `compatible` property with a `.yaml` file extension.
 
-To set a property, see below for examples for common property types, or see [Zephyr's Devicetree documentation](https://docs.zephyrproject.org/latest/build/dts/intro.html#writing-property-values) for more details on the syntax for properties.
+To set a property, see below for examples for common property types, or see [Zephyr's Devicetree documentation](https://docs.zephyrproject.org/3.5.0/build/dts/intro-syntax-structure.html#writing-property-values) for more details on the syntax for properties.
 
 To change a property for an existing node, first find the node you want to change and find its label. Next, outside of any other node, write an ampersand (`&`)
 followed by the node's label, an opening curly brace (`{`), one or more new property values, a closing curly brace (`}`), and a semicolon (`;`).
 
 For example, to adjust the debouncing of the `zmk,kscan-gpio-matrix` node shown above, you could add this to your keymap:
 
-```devicetree
+```dts
 &kscan0 {
     debounce-press-ms = <0>;
 };
@@ -165,17 +164,17 @@ For example, to adjust the debouncing of the `zmk,kscan-gpio-matrix` node shown 
 
 If the node you want to edit doesn't have a label, you can also write a new tree and it will be merged with the existing tree, overriding any properties. Adding this to your keymap would be equivalent to the previous example.
 
-```devicetree
+```dts
 / {
-	kscan {
-		debounce-press-ms = <0>;
-	};
+    kscan {
+        debounce-press-ms = <0>;
+    };
 };
 ```
 
 ### Devicetree Property Types
 
-These are some of the property types you will see most often when working with ZMK. [Zephyr's Devicetree bindings documentation](https://docs.zephyrproject.org/latest/build/dts/bindings.html) provides more detailed information and a full list of types.
+These are some of the property types you will see most often when working with ZMK. [Zephyr's Devicetree bindings documentation](https://docs.zephyrproject.org/3.5.0/build/dts/bindings.html) provides more detailed information and a full list of types.
 
 #### bool
 
@@ -185,7 +184,7 @@ Example: `property;`
 
 If a property has already been set to true and you need to override it to false, use the following command to delete the existing property:
 
-```devicetree
+```dts
 /delete-property/ the-property-name;
 ```
 
@@ -229,22 +228,22 @@ Example: `property = <&none &mo 1>;`
 
 Values can also be split into multiple blocks, e.g. `property = <&none>, <&mo 1>;`
 
-See the documentation for "phandle-array" in [Zephyr's Devicetree bindings documentation](https://docs.zephyrproject.org/latest/build/dts/bindings.html)
+See the documentation for "phandle-array" in [Zephyr's Devicetree bindings documentation](https://docs.zephyrproject.org/3.5.0/build/dts/bindings.html)
 for more details on how parameters are associated with nodes.
 
 #### GPIO array
 
 This is just a phandle array. The documentation lists this as a different type to make it clear which properties expect an array of GPIOs.
 
-Each item in the array should be a label for a GPIO node (the names of which differ between hardware platforms) followed by an index and configuration flags. See [Zephyr's GPIO documentation](https://docs.zephyrproject.org/latest/hardware/peripherals/gpio.html) for a full list of flags.
+Each item in the array should be a label for a GPIO node (the names of which differ between hardware platforms) followed by an index and configuration flags. See [Zephyr's GPIO documentation](https://docs.zephyrproject.org/3.5.0/hardware/peripherals/gpio.html) for a full list of flags.
 
 Example:
 
-```devicetree
+```dts
 some-gpios =
     <&gpio0 0 GPIO_ACTIVE_HIGH>,
     <&gpio0 1 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
-	;
+    ;
 ```
 
 #### path
@@ -253,7 +252,7 @@ A path to a node, either as a node reference or as a string.
 
 Examples:
 
-```
+```dts
 property = &label;
 property = "/path/to/some/node";
 ```

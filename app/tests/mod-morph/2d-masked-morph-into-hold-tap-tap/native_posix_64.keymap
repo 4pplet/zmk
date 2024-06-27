@@ -3,20 +3,19 @@
 #include <dt-bindings/zmk/kscan_mock.h>
 
 &kscan {
-	events = <
+    events = <
         /* Shift + tap &mod_morph --> expect B (but get Shift + B) */
-		ZMK_MOCK_PRESS(0,0,10)
-		ZMK_MOCK_PRESS(0,1,10)
-		ZMK_MOCK_RELEASE(0,1,10)
-		ZMK_MOCK_RELEASE(0,0,10)
-	>;
+        ZMK_MOCK_PRESS(0,0,10)
+        ZMK_MOCK_PRESS(0,1,10)
+        ZMK_MOCK_RELEASE(0,1,10)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
 };
 
 / {
     behaviors {
         mod_morph: mod_morph {
             compatible = "zmk,behavior-mod-morph";
-            label = "MOD_MORPH_TEST";
             #binding-cells = <0>;
             bindings = <&kp A>, <&lt 1 B>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
@@ -24,22 +23,21 @@
 
     };
 
-	keymap {
-		compatible = "zmk,keymap";
-		label ="Default keymap";
+    keymap {
+        compatible = "zmk,keymap";
 
-		default_layer {
-			bindings = <
-				&kp LEFT_SHIFT &mod_morph
-				&kp C &none
-			>;
-		};
+        default_layer {
+            bindings = <
+                &kp LEFT_SHIFT &mod_morph
+                &kp C &none
+            >;
+        };
 
         second_layer {
-			bindings = <
-				&trans &trans
-				&kp D &trans
-			>;
-		};
-	};
+            bindings = <
+                &trans &trans
+                &kp D &trans
+            >;
+        };
+    };
 };
