@@ -3,10 +3,6 @@ title: ZMK Studio Unlock Behavior
 sidebar_label: ZMK Studio Unlock
 ---
 
-:::warning
-ZMK Studio is still in active development. This behavior is documented in preparation for its general availability.
-:::
-
 ## Summary
 
 ## ZMK Studio Unlock

@@ -2,12 +2,6 @@
 title: ZMK Studio RPC Protocol
 ---
 
-:::warning[Alpha Feature]
-
-ZMK Studio is still in active development, and the below information is for development purposes only. For up to date information, join the [ZMK Discord](https://zmk.dev/community/discord/invite) server and discuss in `#studio-development`.
-
-:::
-
 :::danger
 Before reading this section, it is **vital** that you read through our [clean room policy](./contributing/clean-room.md).
 :::
