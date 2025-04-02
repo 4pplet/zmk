@@ -104,7 +104,7 @@ You can use the following nodes to tweak the default behaviors:
 | Node  | Behavior                                              |
 | ----- | ----------------------------------------------------- |
 | `&lt` | [Layer-tap](../keymaps/behaviors/layers.md#layer-tap) |
-| `&mt` | [Mod-tap](../keymaps/behaviors/mod-tap.md)            |
+| `&mt` | [Mod-tap](../keymaps/behaviors/hold-tap.mdx#mod-tap)  |
 
 ## Key Repeat
 
@@ -324,6 +324,12 @@ You can use the following nodes to tweak the default behaviors:
 Creates a custom behavior that triggers a different behavior corresponding to the number of times the key is tapped.
 
 See the [tap dance behavior](../keymaps/behaviors/tap-dance.mdx) documentation for more details and examples.
+
+### Kconfig
+
+| Config                                   | Type | Description                                    | Default |
+| ---------------------------------------- | ---- | ---------------------------------------------- | ------- |
+| `CONFIG_ZMK_BEHAVIOR_TAP_DANCE_MAX_HELD` | int  | Maximum number of simultaneous held tap-dances | 10      |
 
 ### Devicetree
 
