@@ -8,9 +8,6 @@
 / {
     keymap {
         compatible = "zmk,keymap";
-
-        layout = <&layout_ansi_position_map>; // Reference the ANSI layout position map
-
         default_layer {
             // Base layer
             // ------------------------------------------------------------------------------------------

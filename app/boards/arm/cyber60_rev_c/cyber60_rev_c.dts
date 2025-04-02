@@ -9,6 +9,7 @@
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <dt-bindings/led/led.h>
 #include "cyber60_rev_c-pinctrl.dtsi"
+#include "cyber60_rev_c-layouts.dtsi"
 / {
 	model = "CYBER60_REV_C";
 	compatible = "cyber60", "Rev_C";
@@ -18,10 +19,9 @@
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
 		zmk,kscan = &kscan0;
-        zmk,matrix_transform = &default_transform;
         zmk,underglow = &led_strip;
 		zmk,battery = &vbatt;
-		zephyr,console = &cdc_acm_uart;
+		zmk,studio-rpc-uart = &cdc_acm_uart;
 	};
 
 	vbatt: vbatt {
@@ -51,7 +51,9 @@
         compatible = "pwm-buzzer";
 		pwms = <&pwm0 0 1000 PWM_POLARITY_NORMAL>;
 		label = "PWM BUZZER";
-		status = "okay";
+		//set status = "okay" to enable the buzzer
+		status = "disabled";
+		//status = "okay";
     };
 
 	leds {
@@ -73,7 +75,6 @@
 			};
 		};
 
-	// These aliases are provided for compatibility with samples
 	aliases {
 		ledgreen = &led_0;
 		ledred   = &led_1;
@@ -104,7 +105,7 @@
 	kscan0: kscan {
 		compatible = "zmk,kscan-gpio-matrix";
 		label = "KSCAN";
-
+		wakeup-source;
 		diode-direction = "col2row";
 		row-gpios
 			= <&gpio0 28  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
@@ -142,6 +143,9 @@
 	status = "okay";
 };
 
+zephyr_udc0: &usbd {
+    status = "okay";
+};
 
 &usbd {
     status = "okay";
@@ -150,8 +154,8 @@
         label = "CDC_ACM_0";
     };
 };
+
 &pwm0 {
-	//ch0-pin = <23>; //old imp.
     status = "okay";    
 	pinctrl-0 = <&pwm0_default>;
 	pinctrl-1 = <&pwm0_sleep>;

@@ -22,14 +22,14 @@
 	model = "CYBER60_REV_E";
 	compatible = "cyber60", "Rev_E";
 
-	chosen {
+	chosen {       
 		zephyr,code-partition = &code_partition;
 		zephyr,sram = &sram0;
 		zephyr,flash = &flash0;
 		zmk,kscan = &kscan0;
         zmk,underglow = &led_strip;
 		zmk,battery = &fuelgauge;
-		zephyr,console = &cdc_acm_uart;
+		zmk,studio-rpc-uart = &cdc_acm_uart;
 	};
 
 	sensors {
@@ -39,7 +39,6 @@
 
 	encoder: encoder_1 {
         compatible = "alps,ec11";
-        label = "ENCODER";
         a-gpios = <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>; // P0.24
         b-gpios = <&gpio0 13 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>; // P0.13
         //resolution = <2>;
@@ -48,30 +47,27 @@
     buzzer: pwm_buzzer {
         compatible = "pwm-buzzer";
 		pwms = <&pwm0 0 1000 PWM_POLARITY_NORMAL>;
-		label = "PWM BUZZER";
-		status = "okay";
+		//set status = "okay" to enable the buzzer
+		status = "disabled";
+		//status = "okay";
     };
 
 	leds {
 			compatible = "gpio-leds";
 			led_0: led_green { // P0.15
 				gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
-				label = "Green LED";
 				status = "okay";
 			};
 			led_1: led_red { // P0.17
 				gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;
-				label = "Red LED";
 				status = "okay";
 			};
 			led_2: led_blue { // P0.12
 				gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
-				label = "Blue LED";
 				status = "okay";
 			};
 		};
 
-	// These aliases are provided for compatibility with samples
 	aliases {
 		ledgreen = &led_0;
 		ledred   = &led_1;
@@ -81,13 +77,12 @@
 
 	ext-power {
 		compatible = "zmk,ext-power-generic";
-		label = "EXT_POWER";
 		control-gpios = <&gpio0 30 GPIO_ACTIVE_HIGH>; // P0.30
 	};
 
 	kscan0: kscan {
 		compatible = "zmk,kscan-gpio-matrix";
-		label = "KSCAN";
+		wakeup-source;
 		diode-direction = "col2row";
 		row-gpios
 			= <&gpio0 2  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
@@ -111,7 +106,6 @@
 			, <&gpio1 2 GPIO_ACTIVE_HIGH>
 			;
 	};
-	
 };
 
 &gpio0 {
@@ -168,7 +162,6 @@ zephyr_udc0: &usbd {
         label = "CDC_ACM_0";
     };
 };
-
 
 &pwm0 {
     status = "okay";    
