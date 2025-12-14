@@ -1,0 +1,75 @@
+/*
+ * Copyright (c) 2025 Stefan Sundin (4pplet)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/dts-v1/;
+
+#include <nordic/nrf52840_qiaa.dtsi>
+#include <common/nordic/nrf52840_uf2_boot_mode.dtsi>
+
+/ {
+    model = "WHKB";
+    compatible = "applet,whkb";
+
+    chosen {
+        zephyr,code-partition = &code_partition;
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+    };
+
+    leds {
+        compatible = "gpio-leds";
+        blue_led: led_0 {
+            gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+        };
+    };
+};
+
+&reg1 {
+    regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
+&adc {
+    status = "okay";
+};
+
+&gpiote {
+    status = "okay";
+};
+
+&gpio0 {
+    status = "okay";
+};
+
+&gpio1 {
+    status = "okay";
+};
+
+zephyr_udc0: &usbd {
+    status = "okay";
+};
+
+&flash0 {
+    partitions {
+        compatible = "fixed-partitions";
+        #address-cells = <1>;
+        #size-cells = <1>;
+
+        sd_partition: partition@0 {
+            reg = <0x00000000 0x00026000>;
+        };
+        code_partition: partition@26000 {
+            reg = <0x00026000 0x000c6000>;
+        };
+
+        storage_partition: partition@ec000 {
+            reg = <0x000ec000 0x00008000>;
+        };
+
+        boot_partition: partition@f4000 {
+            reg = <0x000f4000 0x0000c000>;
+        };
+    };
+};

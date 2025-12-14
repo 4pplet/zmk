@@ -1,0 +1,11 @@
+board:
+  name: whkb
+  vendor: 4pplet
+  socs:
+    - name: nrf52840
+  revision:
+    format: custom
+    default: rev_b
+    revisions:
+      - name: rev_b
+      - name: rev_b_jp

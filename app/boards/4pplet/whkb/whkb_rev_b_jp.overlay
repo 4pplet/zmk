@@ -1,0 +1,239 @@
+/*
+ * Copyright (c) 2025 Stefan Sundin (4pplet)
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+/*
+ * Additional peripheral pin mappings (not yet implemented):
+ *
+ * MAX17048 Fuel Gauge (I2C):
+ *   Alert: P0.31
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <physical_layouts.dtsi>
+#include "whkb_rev_b-pinctrl.dtsi"
+
+/ {
+    model = "WHKB Rev B JP";
+    compatible = "applet,whkb";
+
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,matrix-transform = &default_transform;
+        zmk,physical-layout = &physical_layout;
+    };
+
+    kscan0: kscan_0 {
+        compatible = "zmk,kscan-gpio-topre";
+        gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>,              /* 0: POWER (LDO EN) */
+                <&gpio0 13 (GPIO_ACTIVE_LOW|GPIO_PULL_UP)>, /* 1: KEY (~KEY) */
+                <&gpio0 20 GPIO_ACTIVE_HIGH>,              /* 2: HYS */
+                <&gpio0 17 GPIO_ACTIVE_HIGH>,              /* 3: BIT0 (Row A) */
+                <&gpio0 15 GPIO_ACTIVE_HIGH>,              /* 4: BIT1 (Row B) */
+                <&gpio0 26 GPIO_ACTIVE_HIGH>,              /* 5: BIT2 (Row C) */
+                <&gpio0 6 GPIO_ACTIVE_HIGH>,               /* 6: BIT3 (Col A) */
+                <&gpio0 8 GPIO_ACTIVE_HIGH>,               /* 7: BIT4 (Col B) */
+                <&gpio0 4 GPIO_ACTIVE_HIGH>,               /* 8: BIT5 (Col C) */
+                <&gpio0 12 GPIO_ACTIVE_HIGH>;              /* 9: STROBE (~D enable) */
+        /* JP extra pins for dual HC4051 multiplexers */
+        row-enable-low-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;  /* Z2 ~Enable (row 0-7) */
+        row-enable-high-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>; /* Z3 ~Enable (row 8-15) */
+        matrix-rows = <16>;
+        matrix-cols = <8>;
+    };
+
+    /* HHKB JP Layout - 69 keys
+     * Matrix is 16 rows x 8 columns
+     * Based on TMK HHKB JP KEYMAP_JP macro where Kxy = RC(x_hex_to_dec, y)
+     * K02=RC(0,2), K32=RC(3,2), KA2=RC(10,2), KB2=RC(11,2), etc.
+     */
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <8>;
+        rows = <16>;
+        map = <
+        /* Row 0: Esc  1    2    3    4    5    6    7    8    9    0    -    ^   Yen  Bksp */
+        /*        K02  K32  K62  K22  K12  K52  K72  KA2  K92  K82  KB2  KE2  KF2 KD2  KC2  */
+        RC(0,2) RC(3,2) RC(6,2) RC(2,2) RC(1,2) RC(5,2) RC(7,2) RC(10,2) RC(9,2) RC(8,2) RC(11,2) RC(14,2) RC(15,2) RC(13,2) RC(12,2)
+        /* Row 1: Tab  Q    W    E    R    T    Y    U    I    O    P    @    [   Enter(top half) */
+        /*        K03  K63  K23  K13  K53  K73  KA3  K93  K83  KB3  KE3  KF3  KD3 */
+        RC(0,3) RC(6,3) RC(2,3) RC(1,3) RC(5,3) RC(7,3) RC(10,3) RC(9,3) RC(8,3) RC(11,3) RC(14,3) RC(15,3) RC(13,3)
+        /* Row 2: Ctrl A    S    D    F    G    H    J    K    L    ;    :    ]   Enter(bottom) */
+        /*        K06  K66  K26  K16  K56  K76  KA6  K96  K86  KB6  KE6  KF6  KD6 KC6 */
+        RC(0,6) RC(6,6) RC(2,6) RC(1,6) RC(5,6) RC(7,6) RC(10,6) RC(9,6) RC(8,6) RC(11,6) RC(14,6) RC(15,6) RC(13,6) RC(12,6)
+        /* Row 3: Shift Z    X    C    V    B    N    M    ,    .    /    \   Shift */
+        /*        K05  K65  K25  K15  K55  K75  KA5  K95  K85  KB5  KE5  KF5 KD5 KC5 */
+        RC(0,5) RC(6,5) RC(2,5) RC(1,5) RC(5,5) RC(7,5) RC(10,5) RC(9,5) RC(8,5) RC(11,5) RC(14,5) RC(15,5) RC(13,5) RC(12,5)
+        /* Row 4: Fn   Zen  Meta Mhen Space Henk Kana Meta Fn   Up   Left Down Right */
+        /*        K04  K34  K64  K24  K14   K74  K94  K84  KB4  KE4  KF4  KD4  KC4 */
+        RC(0,4) RC(3,4) RC(6,4) RC(2,4) RC(1,4) RC(7,4) RC(9,4) RC(8,4) RC(11,4) RC(14,4) RC(15,4) RC(13,4) RC(12,4)
+        >;
+    };
+
+    physical_layout: physical_layout_0 {
+        compatible = "zmk,physical-layout";
+        display-name = "HHKB JP";
+        transform = <&default_transform>;
+        keys = <
+            /* Row 0: 15 keys (Esc through Backspace) */
+            &key_physical_attrs 100 100 0   0   0 0 0
+            &key_physical_attrs 100 100 100 0   0 0 0
+            &key_physical_attrs 100 100 200 0   0 0 0
+            &key_physical_attrs 100 100 300 0   0 0 0
+            &key_physical_attrs 100 100 400 0   0 0 0
+            &key_physical_attrs 100 100 500 0   0 0 0
+            &key_physical_attrs 100 100 600 0   0 0 0
+            &key_physical_attrs 100 100 700 0   0 0 0
+            &key_physical_attrs 100 100 800 0   0 0 0
+            &key_physical_attrs 100 100 900 0   0 0 0
+            &key_physical_attrs 100 100 1000 0  0 0 0
+            &key_physical_attrs 100 100 1100 0  0 0 0
+            &key_physical_attrs 100 100 1200 0  0 0 0
+            &key_physical_attrs 100 100 1300 0  0 0 0
+            &key_physical_attrs 100 100 1400 0  0 0 0
+            /* Row 1: 13 keys (Tab through [, Enter top is part of row 2) */
+            &key_physical_attrs 150 100 0   100 0 0 0
+            &key_physical_attrs 100 100 150 100 0 0 0
+            &key_physical_attrs 100 100 250 100 0 0 0
+            &key_physical_attrs 100 100 350 100 0 0 0
+            &key_physical_attrs 100 100 450 100 0 0 0
+            &key_physical_attrs 100 100 550 100 0 0 0
+            &key_physical_attrs 100 100 650 100 0 0 0
+            &key_physical_attrs 100 100 750 100 0 0 0
+            &key_physical_attrs 100 100 850 100 0 0 0
+            &key_physical_attrs 100 100 950 100 0 0 0
+            &key_physical_attrs 100 100 1050 100 0 0 0
+            &key_physical_attrs 100 100 1150 100 0 0 0
+            &key_physical_attrs 100 100 1250 100 0 0 0
+            /* Row 2: 14 keys (Ctrl through Enter - ISO-style vertical Enter) */
+            &key_physical_attrs 175 100 0   200 0 0 0
+            &key_physical_attrs 100 100 175 200 0 0 0
+            &key_physical_attrs 100 100 275 200 0 0 0
+            &key_physical_attrs 100 100 375 200 0 0 0
+            &key_physical_attrs 100 100 475 200 0 0 0
+            &key_physical_attrs 100 100 575 200 0 0 0
+            &key_physical_attrs 100 100 675 200 0 0 0
+            &key_physical_attrs 100 100 775 200 0 0 0
+            &key_physical_attrs 100 100 875 200 0 0 0
+            &key_physical_attrs 100 100 975 200 0 0 0
+            &key_physical_attrs 100 100 1075 200 0 0 0
+            &key_physical_attrs 100 100 1175 200 0 0 0
+            &key_physical_attrs 100 100 1275 200 0 0 0
+            &key_physical_attrs 150 200 1375 100 0 0 0
+            /* Row 3: 14 keys (Shift through Shift) */
+            &key_physical_attrs 175 100 0   300 0 0 0
+            &key_physical_attrs 100 100 175 300 0 0 0
+            &key_physical_attrs 100 100 275 300 0 0 0
+            &key_physical_attrs 100 100 375 300 0 0 0
+            &key_physical_attrs 100 100 475 300 0 0 0
+            &key_physical_attrs 100 100 575 300 0 0 0
+            &key_physical_attrs 100 100 675 300 0 0 0
+            &key_physical_attrs 100 100 775 300 0 0 0
+            &key_physical_attrs 100 100 875 300 0 0 0
+            &key_physical_attrs 100 100 975 300 0 0 0
+            &key_physical_attrs 100 100 1075 300 0 0 0
+            &key_physical_attrs 100 100 1175 300 0 0 0
+            &key_physical_attrs 100 100 1275 300 0 0 0
+            &key_physical_attrs 125 100 1375 300 0 0 0
+            /* Row 4: 13 keys (Fn through Right arrow) */
+            &key_physical_attrs 100 100 0   400 0 0 0
+            &key_physical_attrs 100 100 100 400 0 0 0
+            &key_physical_attrs 100 100 200 400 0 0 0
+            &key_physical_attrs 150 100 300 400 0 0 0
+            &key_physical_attrs 250 100 450 400 0 0 0
+            &key_physical_attrs 150 100 700 400 0 0 0
+            &key_physical_attrs 100 100 850 400 0 0 0
+            &key_physical_attrs 100 100 950 400 0 0 0
+            &key_physical_attrs 100 100 1050 400 0 0 0
+            &key_physical_attrs 100 100 1150 400 0 0 0
+            &key_physical_attrs 100 100 1250 400 0 0 0
+            &key_physical_attrs 100 100 1350 400 0 0 0
+            &key_physical_attrs 100 100 1450 400 0 0 0
+        >;
+    };
+
+    buzzer: pwm_buzzer {
+        compatible = "pwm-buzzer";
+        pwms = <&pwm0 0 1000 PWM_POLARITY_NORMAL>;
+        status = "disabled";
+    };
+
+    leds {
+        compatible = "gpio-leds";
+        led_0: led_1 {
+            gpios = <&gpio1 4 GPIO_ACTIVE_HIGH>;  /* P1.04 */
+            status = "okay";
+        };
+        led_1: led_2 {
+            gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>; /* P0.10 */
+            status = "okay";
+        };
+        led_2: led_3 {
+            gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;  /* P1.06 */
+            status = "okay";
+        };
+    };
+
+    /* BQ24075 charger status input - active low when charging */
+    charger_status {
+        compatible = "gpio-keys";
+        chg_pin: chg_pin {
+            gpios = <&gpio0 30 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* P0.30 CHG */
+        };
+    };
+
+    aliases {
+        led1 = &led_0;
+        led2 = &led_1;
+        led3 = &led_2;
+        buzzer = &buzzer;
+        chg-status = &chg_pin;
+    };
+};
+
+&pwm0 {
+    status = "okay";
+    pinctrl-0 = <&pwm0_default>;
+    pinctrl-1 = <&pwm0_sleep>;
+    pinctrl-names = "default", "sleep";
+};
+
+/*
+ * ADXL362 accelerometer for wakeup from sleep
+ * Uses ec-support-zmk-module from petejohanson
+ */
+&spi1 {
+    status = "okay";
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&spi1_default>;
+    pinctrl-1 = <&spi1_sleep>;
+    pinctrl-names = "default", "sleep";
+    cs-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>; /* P0.03 CS */
+
+    wakeup_trigger: wakeup_trigger@0 {
+        compatible = "zmk,adxl362-awake-trigger";
+        status = "okay";
+        reg = <0>;
+        spi-max-frequency = <8000000>;
+        int1-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>; /* P1.10 AWAKE */
+        int2-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>; /* Same pin - workaround for module macro */
+        wakeup-source;
+        linked-devices = <&kscan0>;
+
+        normal {
+            activity-threshold = <18>;
+            activity-time = <0>;
+            inactivity-threshold = <60>;
+            inactivity-time = <100>;
+        };
+
+        sleep {
+            activity-threshold = <140>;
+            activity-time = <0>;
+            inactivity-threshold = <500>;
+            inactivity-time = <0>;
+        };
+    };
+};

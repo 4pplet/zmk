@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2025 Stefan Sundin (4pplet)
+ * SPDX-License-Identifier: MIT
+ */
+
+&pinctrl {
+    pwm0_default: pwm0_default {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 1, 2)>; /* P1.02 buzzer pin */
+        };
+    };
+    pwm0_sleep: pwm0_sleep {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 1, 2)>;
+            low-power-enable;
+        };
+    };
+
+    /* SPI1 for ADXL362 accelerometer */
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,  /* P0.22 SCK */
+                    <NRF_PSEL(SPIM_MOSI, 0, 24)>, /* P0.24 COPI */
+                    <NRF_PSEL(SPIM_MISO, 1, 0)>;  /* P1.00 CIPO */
+        };
+    };
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 24)>,
+                    <NRF_PSEL(SPIM_MISO, 1, 0)>;
+            low-power-enable;
+        };
+    };
+};

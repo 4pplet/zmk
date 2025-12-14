@@ -1,0 +1,11 @@
+file_format: "1"
+id: whkb
+name: WHKB
+type: board
+arch: arm
+url: https://github.com/4pplet
+outputs:
+  - usb
+  - ble
+features:
+  - keys

@@ -1,0 +1,16 @@
+# Copyright (c) 2025 Stefan Sundin (4pplet)
+# SPDX-License-Identifier: MIT
+
+config ZMK_KSCAN_GPIO_TOPRE
+    bool "Topre capacitive keyboard GPIO driver"
+    default y
+    depends on DT_HAS_ZMK_KSCAN_GPIO_TOPRE_ENABLED
+    select GPIO
+    help
+      Enable GPIO-based Topre capacitive keyboard scanner driver.
+
+config ZMK_KSCAN_GPIO_TOPRE_DEBUG
+    bool "Topre kscan debug logging"
+    depends on ZMK_KSCAN_GPIO_TOPRE
+    help
+      Enable verbose debug logging for Topre keyboard scanning.

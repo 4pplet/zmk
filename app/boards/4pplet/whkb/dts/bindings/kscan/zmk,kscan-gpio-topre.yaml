@@ -1,0 +1,61 @@
+# Copyright (c) 2022 Kan-Ru Chen
+# Copyright (c) 2025 Stefan Sundin (4pplet)
+# SPDX-License-Identifier: MIT
+
+description: GPIO Topre capacitive keyboard controller
+
+compatible: "zmk,kscan-gpio-topre"
+
+include: kscan.yaml
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO pins for the Topre controller. Must be 10 pins in this order:
+      0: POWER - Power control for the controller board
+      1: KEY - Key sense input
+      2: HYS - Hysteresis control
+      3-8: BIT0-BIT5 - Selection bits for row/column
+      9: STROBE - Strobe signal
+  matrix-relax-us:
+    type: int
+    default: 6
+    description: Microseconds to wait after setting selection bits
+  adc-read-settle-us:
+    type: int
+    default: 5
+    description: Microseconds to wait after strobe before reading key state
+  active-polling-interval-ms:
+    type: int
+    default: 8
+    description: Polling interval in milliseconds when keyboard is active
+  idle-polling-interval-ms:
+    type: int
+    default: 30
+    description: Polling interval in milliseconds when keyboard is idle
+  sleep-polling-interval-ms:
+    type: int
+    default: 3000
+    description: Polling interval in milliseconds when keyboard is in sleep mode
+  row-enable-low-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      GPIO pin for JP Z2 multiplexer enable (rows 0-7). Active low.
+      Only required for HHKB JP variant.
+  row-enable-high-gpios:
+    type: phandle-array
+    required: false
+    description: |
+      GPIO pin for JP Z3 multiplexer enable (rows 8-15). Active low.
+      Only required for HHKB JP variant.
+  matrix-rows:
+    type: int
+    default: 8
+    description: Number of rows in the matrix (8 for ANSI, 16 for JP)
+  matrix-cols:
+    type: int
+    default: 8
+    description: Number of columns in the matrix
