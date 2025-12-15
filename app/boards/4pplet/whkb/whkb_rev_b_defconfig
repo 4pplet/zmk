@@ -24,22 +24,47 @@ CONFIG_PWM=y
 CONFIG_USE_DT_CODE_PARTITION=y
 CONFIG_BUILD_OUTPUT_UF2=y
 
-# Sleep disabled for initial testing - enable after keyboard verified
-# CONFIG_ZMK_SLEEP=y
-# CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=2700000
+# Sleep mode - 3 min timeout for testing (180000 ms)
+CONFIG_ZMK_SLEEP=y
+CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=180000
 
 # Topre driver
 CONFIG_ZMK_KSCAN_GPIO_TOPRE=y
 
 # SPI for ADXL362 accelerometer wakeup
 CONFIG_SPI=y
+CONFIG_ZMK_ADXL362_AWAKE_TRIGGER_SLEEP=y
+CONFIG_WHKB_PRO2_POWER=y
 
-# ZMK Studio support
-CONFIG_ZMK_STUDIO=y
-CONFIG_ZMK_STUDIO_LOCKING=n
+# I2C for MAX17048 fuel gauge
+CONFIG_I2C=y
 
-# USB CDC-ACM for ZMK Studio RPC
+# Battery monitoring via MAX17048
+CONFIG_ZMK_BATTERY=y
+CONFIG_ZMK_MAX17048=y
+
+# USB CDC-ACM for logging
 CONFIG_USB_CDC_ACM=y
 CONFIG_SERIAL=y
 CONFIG_UART_INTERRUPT_DRIVEN=y
 CONFIG_UART_LINE_CTRL=y
+
+# USB serial logging for debugging
+CONFIG_LOG=y
+CONFIG_ZMK_USB_LOGGING=y
+
+# Reduce log noise - only show warnings/errors for most modules
+# but keep INFO level for our custom drivers
+CONFIG_LOG_DEFAULT_LEVEL=2
+CONFIG_ZMK_LOG_LEVEL_INF=y
+CONFIG_KSCAN_LOG_LEVEL_INF=y
+
+# Stack overflow detection
+CONFIG_STACK_SENTINEL=y
+
+# Thread analyzer for stack usage monitoring
+CONFIG_THREAD_STACK_INFO=y
+CONFIG_THREAD_ANALYZER=y
+CONFIG_THREAD_ANALYZER_USE_PRINTK=y
+CONFIG_THREAD_ANALYZER_AUTO=y
+CONFIG_THREAD_ANALYZER_AUTO_INTERVAL=10

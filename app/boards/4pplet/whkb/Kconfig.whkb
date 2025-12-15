@@ -7,4 +7,11 @@ config BOARD_WHKB
     imply RETENTION
     imply RETENTION_BOOT_MODE
 
+config WHKB_PRO2_POWER
+    bool "WHKB Pro2 power management"
+    help
+      Enable ADXL362 GPIO power control and sleep guard for WHKB Pro2 (Rev B).
+      This power-cycles the accelerometer on P0.28 during init and prevents
+      sleep if no wakeup source is available.
+
 rsource "drivers/Kconfig"

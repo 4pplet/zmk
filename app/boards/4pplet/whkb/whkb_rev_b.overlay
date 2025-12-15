@@ -5,10 +5,9 @@
  */
 
 /*
- * Additional peripheral pin mappings (not yet implemented):
- *
- * MAX17048 Fuel Gauge (I2C):
- *   Alert: P0.31
+ * Pin assignments:
+ * P0.28 - ADXL362 power control (GPIO-switched VDD for clean POR on warm reboot)
+ * P0.31 - BQ24075 Power Good (PGOOD) input
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -31,7 +30,8 @@
     chosen {
         zmk,kscan = &kscan0;
         zmk,physical-layout = &physical_layout;
-        zmk,studio-rpc-uart = &cdc_acm_uart;
+        zmk,battery = &fuelgauge;
+        zephyr,console = &cdc_acm_uart;
     };
 
     kscan0: kscan_0 {
@@ -181,6 +181,7 @@
         compatible = "gpio-keys";
         chg_pin: chg_pin {
             gpios = <&gpio0 30 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* P0.30 CHG */
+            status = "okay";
         };
     };
 
@@ -221,7 +222,7 @@
 
     wakeup_trigger: wakeup_trigger@0 {
         compatible = "zmk,adxl362-awake-trigger";
-        status = "disabled";  /* Enable after basic keyboard verified */
+        status = "okay";
         reg = <0>;
         spi-max-frequency = <8000000>;
         int1-gpios = <&gpio1 10 GPIO_ACTIVE_HIGH>; /* P1.10 AWAKE */
@@ -229,18 +230,37 @@
         wakeup-source;
         linked-devices = <&kscan0>;
 
+        /*
+         * Accelerometer sensitivity settings - adjust these to tune wake behavior.
+         * Threshold values are in milli-g (1000 = 1g). Higher = less sensitive.
+         * Time values are in sample periods at 12.5Hz (1 = 80ms).
+         */
         normal {
-            activity-threshold = <18>;
+            activity-threshold = <18>;    /* Detect light movement */
             activity-time = <0>;
             inactivity-threshold = <60>;
             inactivity-time = <100>;
         };
-
         sleep {
-            activity-threshold = <140>;
-            activity-time = <0>;
+            activity-threshold = <50>;    /* Wake threshold: 50=sensitive, 75=default, 150=tap, 250=firm shake */
+            activity-time = <1>;          /* Require sustained movement (prevents false wake) */
             inactivity-threshold = <500>;
             inactivity-time = <0>;
         };
+    };
+};
+
+/* I2C for MAX17048 fuel gauge */
+&i2c0 {
+    status = "okay";
+    compatible = "nordic,nrf-twim";
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-1 = <&i2c0_sleep>;
+    pinctrl-names = "default", "sleep";
+    clock-frequency = <100000>;
+
+    fuelgauge: max17048@36 {
+        compatible = "zmk,maxim-max17048";
+        reg = <0x36>;
     };
 };

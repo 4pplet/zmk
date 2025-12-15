@@ -13,11 +13,17 @@
 #include <zephyr/drivers/kscan.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/dt-bindings/gpio/nordic-nrf-gpio.h>
 
-LOG_MODULE_REGISTER(kscan_topre, CONFIG_LOG_DEFAULT_LEVEL);
+LOG_MODULE_REGISTER(kscan_topre, CONFIG_ZMK_LOG_LEVEL);
+
+#include <zmk/event_manager.h>
+#include <zmk/events/activity_state_changed.h>
+#include <zmk/activity.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+
+/* Store device reference for activity listener (single instance) */
+static const struct device *topre_dev;
 
 #define SEL_PINS 6
 
@@ -74,11 +80,37 @@ static int kscan_gpio_topre_disable(const struct device *dev) {
     return 0;
 }
 
+static void kscan_gpio_topre_update_polling(const struct device *dev, enum zmk_activity_state state) {
+    struct kscan_gpio_topre_data *data = dev->data;
+    const struct kscan_gpio_topre_config *cfg = dev->config;
+    uint16_t interval_ms;
+
+    switch (state) {
+    case ZMK_ACTIVITY_IDLE:
+        interval_ms = cfg->idle_polling_interval_ms;
+        break;
+    case ZMK_ACTIVITY_ACTIVE:
+    default:
+        interval_ms = cfg->active_polling_interval_ms;
+        break;
+    }
+
+    LOG_INF("Topre polling interval: %dms (%s)",
+            interval_ms, state == ZMK_ACTIVITY_ACTIVE ? "active" : "idle");
+    k_timer_start(&data->poll_timer, K_MSEC(interval_ms), K_MSEC(interval_ms));
+}
+
 static void kscan_gpio_topre_timer_handler(struct k_timer *timer) {
     struct kscan_gpio_topre_data *data =
         CONTAINER_OF(timer, struct kscan_gpio_topre_data, poll_timer);
     k_work_submit(&data->poll);
 }
+
+/* Static buffer to reduce stack usage */
+static bool matrix_read[16 * 8];
+
+/* Debug: track scan cycles */
+static uint32_t scan_cycle_count = 0;
 
 static void kscan_gpio_topre_work_handler(struct k_work *work) {
     struct kscan_gpio_topre_data *data = CONTAINER_OF(work, struct kscan_gpio_topre_data, poll);
@@ -86,8 +118,12 @@ static void kscan_gpio_topre_work_handler(struct k_work *work) {
     const struct kscan_gpio_topre_config *cfg = dev->config;
     const int matrix_rows = cfg->matrix_rows;
     const int matrix_cols = cfg->matrix_cols;
-    const int matrix_cells = matrix_rows * matrix_cols;
-    bool matrix_read[16 * 8]; /* Max size */
+
+    scan_cycle_count++;
+    /* Log every 1000 scans (~8 seconds at 8ms interval) */
+    if ((scan_cycle_count % 1000) == 0) {
+        LOG_INF("Topre scan cycle %u", scan_cycle_count);
+    }
 
     /* Power on everything - use raw gpio to match original driver */
     gpio_pin_configure_dt(&cfg->key, GPIO_INPUT);
@@ -218,28 +254,18 @@ static int kscan_gpio_topre_init(const struct device *dev) {
             LOG_ERR("GPIO port for bit %d is not ready", i);
             return -ENODEV;
         }
-        /* Use high drive strength for BIT3 (Col A, index 3) since even columns
-         * (where BIT3=0) show instability. High drive may help if the decoder
-         * input has marginal signal levels when pulling low. */
-        gpio_flags_t flags = GPIO_OUTPUT_INACTIVE;
-        if (i == 3) {
-            flags |= NRF_GPIO_DRIVE_H0H1;
-            LOG_INF("Configuring BIT3 (Col A) with high drive strength");
-        }
-        err = gpio_pin_configure_dt(&cfg->bits[i], flags);
+        err = gpio_pin_configure_dt(&cfg->bits[i], GPIO_OUTPUT_INACTIVE);
         if (err) {
             LOG_ERR("Failed to configure bit %d pin: %d", i, err);
             return err;
         }
     }
 
-    /* The power line needs to source more than 0.5 mA current.
-     * Use high drive strength as in the original whkb-zmk-config driver. */
     if (!gpio_is_ready_dt(&cfg->power)) {
         LOG_ERR("GPIO port for power is not ready");
         return -ENODEV;
     }
-    err = gpio_pin_configure_dt(&cfg->power, GPIO_OUTPUT_INACTIVE | NRF_GPIO_DRIVE_H0H1);
+    err = gpio_pin_configure_dt(&cfg->power, GPIO_OUTPUT_INACTIVE);
     if (err) {
         LOG_ERR("Failed to configure power pin: %d", err);
         return err;
@@ -299,6 +325,7 @@ static int kscan_gpio_topre_init(const struct device *dev) {
     }
 
     data->dev = dev;
+    topre_dev = dev;  /* Store for activity listener */
 
     k_timer_init(&data->poll_timer, kscan_gpio_topre_timer_handler, NULL);
     k_work_init(&data->poll, kscan_gpio_topre_work_handler);
@@ -357,5 +384,23 @@ static DEVICE_API(kscan, kscan_gpio_topre_api) = {
                           CONFIG_APPLICATION_INIT_PRIORITY, &kscan_gpio_topre_api);
 
 DT_INST_FOREACH_STATUS_OKAY(KSCAN_GPIO_TOPRE_INST)
+
+/* Activity state listener - adjust polling rate based on activity */
+static int topre_activity_listener(const zmk_event_t *eh) {
+    const struct zmk_activity_state_changed *ev = as_zmk_activity_state_changed(eh);
+    if (!ev || !topre_dev) {
+        return ZMK_EV_EVENT_BUBBLE;
+    }
+
+    /* Only handle active/idle transitions - sleep is handled by sys_poweroff */
+    if (ev->state == ZMK_ACTIVITY_ACTIVE || ev->state == ZMK_ACTIVITY_IDLE) {
+        kscan_gpio_topre_update_polling(topre_dev, ev->state);
+    }
+
+    return ZMK_EV_EVENT_BUBBLE;
+}
+
+ZMK_LISTENER(topre_activity, topre_activity_listener);
+ZMK_SUBSCRIPTION(topre_activity, zmk_activity_state_changed);
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */

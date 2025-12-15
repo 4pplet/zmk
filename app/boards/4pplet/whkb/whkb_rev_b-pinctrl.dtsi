@@ -32,4 +32,19 @@
             low-power-enable;
         };
     };
+
+    /* I2C0 for MAX17048 fuel gauge */
+    i2c0_default: i2c0_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 5)>,  /* P0.05 SDA */
+                    <NRF_PSEL(TWIM_SCL, 1, 9)>;  /* P1.09 SCL */
+        };
+    };
+    i2c0_sleep: i2c0_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 5)>,
+                    <NRF_PSEL(TWIM_SCL, 1, 9)>;
+            low-power-enable;
+        };
+    };
 };

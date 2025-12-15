@@ -4,4 +4,5 @@
 if(CONFIG_ZMK_KSCAN_GPIO_TOPRE)
   zephyr_library()
   zephyr_library_sources(kscan_gpio_topre.c)
+  zephyr_library_include_directories(${APPLICATION_SOURCE_DIR}/include)
 endif()

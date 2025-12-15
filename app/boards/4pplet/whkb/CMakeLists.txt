@@ -7,3 +7,4 @@ endif()
 
 target_sources(app PRIVATE whkb_led.c)
 target_sources(app PRIVATE whkb_buzzer.c)
+target_sources_ifdef(CONFIG_WHKB_PRO2_POWER app PRIVATE whkb_pro2_power.c)
