@@ -58,7 +58,6 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #define SHORT_BLINK_OFF     200
 #define LONG_BLINK_ON       500
 #define LONG_BLINK_OFF      200
-#define BLINK_PAUSE         600   /* Pause after blink sequence */
 #define PAIRING_BLINK       300   /* Pairing LED blink interval */
 #define LOW_BATT_BLINK      500   /* Low battery LED blink interval */
 #define LOW_BATT_THRESHOLD  15
@@ -96,7 +95,6 @@ static bool sequence_active;      /* Profile sequence running */
 static bool pairing_led_on;
 static bool battery_led_on;
 static bool low_battery;          /* Battery below threshold */
-static uint8_t last_batt_level = 100;
 
 static void led_left_set(bool on) {
     gpio_pin_configure_dt(&led_left, on ? GPIO_OUTPUT_HIGH : GPIO_DISCONNECTED);
@@ -119,19 +117,10 @@ static void all_leds_set(bool on) {
 static bool is_charging(void) {
 #if HAS_CHG_PIN
     if (!device_is_ready(chg_pin.port)) {
-        LOG_WRN("CHG pin port not ready");
         return false;
     }
-    int val = gpio_pin_get_dt(&chg_pin);
-    /* Only log on state change to reduce noise */
-    static int last_val = -1;
-    if (val != last_val) {
-        LOG_INF("CHG pin changed: %d -> %d", last_val, val);
-        last_val = val;
-    }
-    return val > 0;
+    return gpio_pin_get_dt(&chg_pin) > 0;
 #else
-    LOG_WRN("HAS_CHG_PIN is 0 - no charging pin configured");
     return false;
 #endif
 }
@@ -260,17 +249,7 @@ static void stop_battery_indicator(void) {
     battery_led_on = false;
 }
 
-/* Debug: track battery LED ticks */
-static uint32_t battery_tick_count = 0;
-
 static void battery_led_tick(struct k_work *work) {
-    battery_tick_count++;
-    /* Log every 100 ticks (~50 seconds at 500ms interval) */
-    if ((battery_tick_count % 100) == 0) {
-        LOG_INF("Battery LED tick %u (usb=%d, charging=%d, low=%d)",
-                battery_tick_count, usb_powered, is_charging(), low_battery);
-    }
-
     if (is_asleep) {
         led_right_set(false);
         battery_led_on = false;
@@ -368,19 +347,14 @@ static int on_usb(const zmk_event_t *eh) {
     bool was_powered = usb_powered;
     usb_powered = (ev->conn_state != ZMK_USB_CONN_NONE);
 
-    LOG_INF("USB state: %s (was %s)", usb_powered ? "connected" : "disconnected",
-            was_powered ? "connected" : "disconnected");
-
     if (is_asleep) return ZMK_EV_EVENT_BUBBLE;
 
     if (usb_powered && !was_powered) {
         /* USB just connected - update battery indicator, stop pairing */
-        LOG_INF("USB connected - updating battery indicator");
         update_battery_indicator();
         stop_pairing_indicator();
     } else if (!usb_powered && was_powered) {
         /* USB just disconnected - update battery indicator, maybe start pairing */
-        LOG_INF("USB disconnected - updating battery indicator");
         update_battery_indicator();
         if (profile_open) {
             start_pairing_indicator();

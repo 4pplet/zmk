@@ -109,21 +109,12 @@ static void kscan_gpio_topre_timer_handler(struct k_timer *timer) {
 /* Static buffer to reduce stack usage */
 static bool matrix_read[16 * 8];
 
-/* Debug: track scan cycles */
-static uint32_t scan_cycle_count = 0;
-
 static void kscan_gpio_topre_work_handler(struct k_work *work) {
     struct kscan_gpio_topre_data *data = CONTAINER_OF(work, struct kscan_gpio_topre_data, poll);
     const struct device *dev = data->dev;
     const struct kscan_gpio_topre_config *cfg = dev->config;
     const int matrix_rows = cfg->matrix_rows;
     const int matrix_cols = cfg->matrix_cols;
-
-    scan_cycle_count++;
-    /* Log every 1000 scans (~8 seconds at 8ms interval) */
-    if ((scan_cycle_count % 1000) == 0) {
-        LOG_INF("Topre scan cycle %u", scan_cycle_count);
-    }
 
     /* Power on everything - use raw gpio to match original driver */
     gpio_pin_configure_dt(&cfg->key, GPIO_INPUT);
