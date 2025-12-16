@@ -303,8 +303,6 @@ static int on_ble_profile(const zmk_event_t *eh) {
     profile_open = zmk_ble_active_profile_is_open();
 #endif
 
-    LOG_INF("Profile changed: %d (open=%d)", profile_idx, profile_open);
-
     start_profile_sequence();
 
     if (profile_open) {
@@ -378,11 +376,9 @@ static int on_battery(const zmk_event_t *eh) {
 
     /* Update indicator if state changed */
     if (low_battery != was_low) {
-        LOG_INF("Battery %s threshold (%d%%)", low_battery ? "below" : "above", level);
         update_battery_indicator();
     }
 
-    last_batt_level = level;
     return ZMK_EV_EVENT_BUBBLE;
 }
 #endif
@@ -394,15 +390,9 @@ static int whkb_led_init(void) {
     all_leds_set(false);
 
 #if HAS_CHG_PIN
-    LOG_INF("CHG pin configured");
     if (device_is_ready(chg_pin.port)) {
         gpio_pin_configure_dt(&chg_pin, GPIO_INPUT);
-        LOG_INF("CHG pin ready, initial value: %d", gpio_pin_get_dt(&chg_pin));
-    } else {
-        LOG_WRN("CHG pin port not ready at init");
     }
-#else
-    LOG_INF("No CHG pin configured (HAS_CHG_PIN=0)");
 #endif
 
 #if IS_ENABLED(CONFIG_ZMK_BLE)
@@ -412,22 +402,18 @@ static int whkb_led_init(void) {
 
 #if IS_ENABLED(CONFIG_USB_DEVICE_STACK)
     usb_powered = zmk_usb_is_powered();
-    LOG_INF("USB powered at init: %d", usb_powered);
 #endif
 
     is_asleep = (zmk_activity_get_state() == ZMK_ACTIVITY_SLEEP);
 
-    /* Start pairing indicator if profile is open at boot */
     if (profile_open && !is_asleep) {
         start_pairing_indicator();
     }
 
-    /* Start battery indicator if needed at boot */
     if (!is_asleep) {
         update_battery_indicator();
     }
 
-    LOG_INF("WHKB LED init (profile=%d, open=%d, usb=%d)", profile_idx, profile_open, usb_powered);
     return 0;
 }
 
