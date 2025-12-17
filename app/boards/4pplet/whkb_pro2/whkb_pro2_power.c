@@ -1,22 +1,9 @@
 /*
  * Copyright (c) 2025 Stefan Sundin (4pplet)
- *
  * SPDX-License-Identifier: MIT
  *
- * WHKB Pro2 (Rev B) Power Control & Sleep Guard
- *
- * This module is specific to the WHKB Pro2 hardware which has:
- * - ADXL362 accelerometer for wake-from-sleep (GPIO-powered via P0.28)
- * - Deep sleep support requiring a working wakeup source
- *
- * Functions:
- * 1. Power-cycles the ADXL362 on P0.28 during init to ensure a clean
- *    power-on reset (DCDC stays running during warm reboot)
- * 2. Provides a sleep guard that prevents deep sleep if no wakeup source
- *    is available (avoids bricking the keyboard)
- *
- * The power init runs at POST_KERNEL priority to execute before the ADXL362
- * driver which runs at APPLICATION priority.
+ * WHKB Pro2: Power-cycles ADXL362 (P0.28) at boot for clean POR,
+ * and provides sleep guard to prevent deep sleep without wakeup source.
  */
 
 #include <zephyr/kernel.h>

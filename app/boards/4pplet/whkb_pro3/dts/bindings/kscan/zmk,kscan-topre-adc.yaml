@@ -1,0 +1,97 @@
+# Copyright (c) 2025 Stefan Sundin (4pplet)
+# SPDX-License-Identifier: MIT
+
+description: |
+  ADC-based Topre electrostatic capacitive kscan driver for WHKB Pro3.
+  Uses analog sensing via OpAmp and ADC instead of digital comparator.
+
+compatible: "zmk,kscan-topre-adc"
+
+include: kscan.yaml
+
+properties:
+  row-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO pins for row drive (active high).
+      Must have exactly 4 entries for the 4 rows.
+
+  col-sel-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO pins for 3-bit column address (COL_A, COL_B, COL_C).
+      Must have exactly 3 entries.
+
+  u1-en-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO for U1 mux enable (columns 0-7).
+      Should be configured as active-low in DT if the mux uses active-low enable.
+
+  u2-en-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      GPIO for U2 mux enable (columns 8-14).
+      Should be configured as active-low in DT if the mux uses active-low enable.
+
+  opamp-en-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO for OpAmp enable (active high).
+
+  discharge-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO for sample capacitor discharge (active high).
+
+  power-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO for switch board power control (active high).
+
+  io-channels:
+    type: phandle-array
+    required: true
+    description: ADC channel for analog sense input.
+
+  actuation-threshold-mv:
+    type: int
+    required: true
+    description: |
+      Actuation threshold in millivolts.
+      Keys with ADC reading below this value are considered pressed.
+      Typical values: 800-1200mV depending on key wear and calibration.
+
+  row-drive-us:
+    type: int
+    default: 20
+    description: Row drive pulse width in microseconds.
+
+  row-settle-us:
+    type: int
+    default: 80
+    description: Time between row drives in microseconds.
+
+  opamp-settle-us:
+    type: int
+    default: 22
+    description: OpAmp enable settling time in microseconds.
+
+  discharge-us:
+    type: int
+    default: 7
+    description: Capacitor discharge time in microseconds.
+
+  active-polling-interval-ms:
+    type: int
+    default: 8
+    description: Polling interval in milliseconds when keyboard is active.
+
+  idle-polling-interval-ms:
+    type: int
+    default: 100
+    description: Polling interval in milliseconds when keyboard is idle.

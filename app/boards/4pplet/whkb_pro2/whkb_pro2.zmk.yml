@@ -1,6 +1,6 @@
 file_format: "1"
-id: whkb
-name: WHKB
+id: whkb_pro2
+name: WHKB Pro2
 type: board
 arch: arm
 url: https://github.com/4pplet

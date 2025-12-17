@@ -54,64 +54,28 @@ static void play_tone(uint32_t period, k_timeout_t duration) {
     }
 }
 
-static void play_sound_sequence(const uint32_t *tones, size_t count) {
-    for (size_t i = 0; i < count; i++) {
-        play_tone(tones[i], BEEP_DURATION);
+static void play_profile_sound(uint8_t profile) {
+    static const uint32_t profile_tones[][5] = {
+        {1000000, 500000, 250000, 100000, 50000},  /* Profile 0 */
+        {1500000, 3900000, 1500000, 1500000, 0},   /* Profile 1 */
+        {1500000, 3900000, 0, 0, 0},               /* Profile 2 */
+        {2000000, 3900000, 0, 0, 0},               /* Profile 3 */
+        {2500000, 3900000, 0, 0, 0},               /* Profile 4 */
+    };
+
+    if (profile >= ARRAY_SIZE(profile_tones)) return;
+
+    for (int i = 0; i < 5 && profile_tones[profile][i]; i++) {
+        play_tone(profile_tones[profile][i], BEEP_DURATION);
         k_sleep(K_MSEC(50));
     }
 }
 
-void play_sound_1() {
-    const uint32_t tones[] = {1000000, 500000, 250000, 100000, 50000};
-    play_sound_sequence(tones, ARRAY_SIZE(tones));
-}
-
-void play_sound_2() {
-    const uint32_t tones[] = {1500000, 3900000, 1500000, 1500000};
-    play_sound_sequence(tones, ARRAY_SIZE(tones));
-}
-
-void play_sound_3() {
-    const uint32_t tones[] = {1500000, 3900000};
-    play_sound_sequence(tones, ARRAY_SIZE(tones));
-}
-
-void play_sound_4() {
-    const uint32_t tones[] = {2000000, 3900000};
-    play_sound_sequence(tones, ARRAY_SIZE(tones));
-}
-
-void play_sound_5() {
-    const uint32_t tones[] = {2500000, 3900000};
-    play_sound_sequence(tones, ARRAY_SIZE(tones));
-}
-
-int buzzer_listener(const zmk_event_t *eh) {
-    const struct zmk_ble_active_profile_changed *profile_ev = as_zmk_ble_active_profile_changed(eh);
-    if (!profile_ev) {
-        return ZMK_EV_EVENT_BUBBLE;
+static int buzzer_listener(const zmk_event_t *eh) {
+    const struct zmk_ble_active_profile_changed *ev = as_zmk_ble_active_profile_changed(eh);
+    if (ev) {
+        play_profile_sound(ev->index);
     }
-
-    switch (profile_ev->index) {
-        case 0:
-            play_sound_1();
-            break;
-        case 1:
-            play_sound_2();
-            break;
-        case 2:
-            play_sound_3();
-            break;
-        case 3:
-            play_sound_4();
-            break;
-        case 4:
-            play_sound_5();
-            break;
-        default:
-            break;
-    }
-
     return ZMK_EV_EVENT_BUBBLE;
 }
 

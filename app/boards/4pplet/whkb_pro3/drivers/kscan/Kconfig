@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Stefan Sundin (4pplet)
+# SPDX-License-Identifier: MIT
+
+config ZMK_KSCAN_TOPRE_ADC
+    bool "ADC-based Topre kscan driver"
+    default y
+    depends on DT_HAS_ZMK_KSCAN_TOPRE_ADC_ENABLED
+    depends on GPIO
+    depends on ADC
+    help
+      Enable ADC-based Topre electrostatic capacitive sensing driver.
+      Uses analog OpAmp output with ADC instead of digital comparator.

@@ -10,8 +10,8 @@
 #include <common/nordic/nrf52840_uf2_boot_mode.dtsi>
 
 / {
-    model = "WHKB";
-    compatible = "applet,whkb";
+    model = "WHKB Pro2";
+    compatible = "applet,whkb-pro2";
 
     chosen {
         zephyr,code-partition = &code_partition;

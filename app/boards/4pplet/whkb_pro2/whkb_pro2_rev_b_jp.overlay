@@ -13,11 +13,11 @@
 
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <physical_layouts.dtsi>
-#include "whkb_rev_b-pinctrl.dtsi"
+#include "whkb_pro2_rev_b-pinctrl.dtsi"
 
 / {
-    model = "WHKB Rev B JP";
-    compatible = "applet,whkb";
+    model = "WHKB Pro2 Rev B JP";
+    compatible = "applet,whkb-pro2";
 
     chosen {
         zmk,kscan = &kscan0;

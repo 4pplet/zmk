@@ -1,0 +1,8 @@
+file_format: "1"
+id: whkb_pro3
+name: WHKB Pro3
+type: board
+arch: arm
+outputs:
+  - usb
+  - ble

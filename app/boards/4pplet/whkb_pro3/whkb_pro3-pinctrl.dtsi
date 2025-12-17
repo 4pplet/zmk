@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2025 Stefan Sundin (4pplet)
+ * SPDX-License-Identifier: MIT
+ *
+ * WHKB Pro3 pin control configuration
+ */
+
+&pinctrl {
+    /* SPI for ADXL362 accelerometer (if present) */
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 24)>,
+                    <NRF_PSEL(SPIM_MISO, 1, 0)>;
+        };
+    };
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
+                    <NRF_PSEL(SPIM_MOSI, 0, 24)>,
+                    <NRF_PSEL(SPIM_MISO, 1, 0)>;
+            low-power-enable;
+        };
+    };
+
+    /* PWM for buzzer */
+    pwm0_default: pwm0_default {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 11)>;  /* Buzzer pin - adjust as needed */
+        };
+    };
+    pwm0_sleep: pwm0_sleep {
+        group1 {
+            psels = <NRF_PSEL(PWM_OUT0, 0, 11)>;
+            low-power-enable;
+        };
+    };
+
+    /* I2C for fuel gauge (if present) */
+    i2c0_default: i2c0_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 5)>,
+                    <NRF_PSEL(TWIM_SCL, 1, 9)>;
+        };
+    };
+    i2c0_sleep: i2c0_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 5)>,
+                    <NRF_PSEL(TWIM_SCL, 1, 9)>;
+            low-power-enable;
+        };
+    };
+};

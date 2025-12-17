@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Stefan Sundin (4pplet)
 # SPDX-License-Identifier: MIT
 
-if(CONFIG_BOARD_WHKB)
+if(CONFIG_BOARD_WHKB_PRO2)
   add_subdirectory(drivers)
 endif()
 
