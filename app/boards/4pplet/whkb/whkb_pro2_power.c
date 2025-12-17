@@ -34,21 +34,17 @@ LOG_MODULE_REGISTER(whkb_pro2_power, CONFIG_LOG_DEFAULT_LEVEL);
 #define ADXL_POWER_PIN  28
 
 /*
- * Sleep guard: periodically check if wakeup source is available.
- * If not, generate a fake key event to reset the sleep timer.
- * This prevents entering deep sleep without a way to wake up.
- *
- * Check interval should be less than CONFIG_ZMK_IDLE_SLEEP_TIMEOUT.
+ * Sleep guard: prevent deep sleep if no wakeup source available.
+ * Generates fake key events to reset activity timer.
  */
 #if IS_ENABLED(CONFIG_ZMK_SLEEP)
 
 #define SLEEP_GUARD_INTERVAL_SEC 30
-static bool wakeup_warning_logged = false;
 
 static bool has_wakeup_source(void)
 {
-    const struct device *wakeup_dev = device_get_binding("wakeup_trigger");
-    return (wakeup_dev != NULL && device_is_ready(wakeup_dev));
+    const struct device *dev = device_get_binding("wakeup_trigger");
+    return (dev != NULL && device_is_ready(dev));
 }
 
 static void sleep_guard_work_handler(struct k_work *work);
@@ -57,33 +53,10 @@ K_WORK_DELAYABLE_DEFINE(sleep_guard_work, sleep_guard_work_handler);
 static void sleep_guard_work_handler(struct k_work *work)
 {
     if (!has_wakeup_source()) {
-        if (!wakeup_warning_logged) {
-            LOG_WRN("No wakeup source - sleep guard active");
-            wakeup_warning_logged = true;
-        }
-        /*
-         * Generate a fake position event to reset the activity timer.
-         * This prevents the system from entering sleep.
-         */
         raise_zmk_position_state_changed((struct zmk_position_state_changed){
-            .source = 0,
-            .position = 0,
-            .state = false,  /* Key release - less intrusive */
-            .timestamp = k_uptime_get()
+            .source = 0, .position = 0, .state = false, .timestamp = k_uptime_get()
         });
-    } else {
-        if (wakeup_warning_logged) {
-            LOG_INF("Wakeup source now available - sleep guard inactive");
-            wakeup_warning_logged = false;
-        }
     }
-
-    /* Reschedule */
-    k_work_schedule(&sleep_guard_work, K_SECONDS(SLEEP_GUARD_INTERVAL_SEC));
-}
-
-static void start_sleep_guard(void)
-{
     k_work_schedule(&sleep_guard_work, K_SECONDS(SLEEP_GUARD_INTERVAL_SEC));
 }
 
@@ -105,25 +78,14 @@ static int whkb_pro2_power_init(void)
         return ret;
     }
 
-    /*
-     * Power cycle sequence:
-     * 1. Drive low to cut power (in case it was already high)
-     * 2. Wait for capacitors to discharge and chip to fully power down
-     * 3. Drive high to restore power
-     * 4. Wait for ADXL362 startup time before driver init
-     */
-    LOG_INF("ADXL362 power cycle: OFF");
+    /* Power cycle: OFF 100ms, ON 20ms */
     gpio_pin_set(gpio0, ADXL_POWER_PIN, 0);
-    k_sleep(K_MSEC(50));  /* Allow full discharge */
-
-    LOG_INF("ADXL362 power cycle: ON");
+    k_sleep(K_MSEC(100));
     gpio_pin_set(gpio0, ADXL_POWER_PIN, 1);
-    k_sleep(K_MSEC(10));  /* ADXL362 needs ~5ms after power-on */
-
-    LOG_INF("ADXL362 power cycle complete");
+    k_sleep(K_MSEC(20));
 
 #if IS_ENABLED(CONFIG_ZMK_SLEEP)
-    start_sleep_guard();
+    k_work_schedule(&sleep_guard_work, K_SECONDS(SLEEP_GUARD_INTERVAL_SEC));
 #endif
 
     return 0;
