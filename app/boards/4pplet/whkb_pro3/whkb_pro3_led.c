@@ -3,18 +3,19 @@
  *
  * SPDX-License-Identifier: MIT
  *
- * WHKB Pro3 LED Indicator Driver (2 LEDs)
- *
- * LED Layout: [LEFT] [RIGHT]
- *             (led1)  (led2)
+ * WHKB Pro3 LED Indicator Driver (2 LEDs, different colors)
  *
  * LED Behavior:
- * - Left LED (Profile/Pairing):
- *     Blink pattern indicates profile number on change
- *     Continuous blink when profile is open (advertising)
- * - Right LED (Battery):
- *     Solid: Charging (USB connected + battery charging)
- *     Blinking: Low battery warning (below threshold, not on USB)
+ * - Profile change: LED1 blinks pattern indicating profile number
+ *     Profile 0: 1 short blink
+ *     Profile 1: 2 short blinks
+ *     Profile 2: 3 short blinks
+ *     Profile 3: 1 long blink
+ *     Profile 4: 2 long blinks
+ * - Pairing (advertising): LEDs alternate (LED1-LED2-LED1-LED2...)
+ * - Battery:
+ *     LED2 solid: Charging (USB connected + battery charging)
+ *     LED2 blinking: Low battery warning (below threshold, not on USB)
  *     Off: Normal operation or fully charged
  * - Sleep: All LEDs off
  */
@@ -43,25 +44,33 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <zmk/events/battery_state_changed.h>
 #endif
 
-#define LED_LEFT_NODE DT_ALIAS(led1)   /* Profile/Pairing indicator */
-#define LED_RIGHT_NODE DT_ALIAS(led2)  /* Battery indicator */
+#define LED1_NODE DT_ALIAS(led1)
+#define LED2_NODE DT_ALIAS(led2)
+#define CHG_NODE DT_ALIAS(chg_status)
 
 /* Timing (ms) */
 #define SHORT_BLINK_ON      150
 #define SHORT_BLINK_OFF     200
 #define LONG_BLINK_ON       500
 #define LONG_BLINK_OFF      200
-#define PAIRING_BLINK       300
+#define PAIRING_BLINK       250   /* Alternating LED interval */
 #define LOW_BATT_BLINK      500
 #define LOW_BATT_THRESHOLD  15
 
-#if !DT_NODE_HAS_STATUS(LED_LEFT_NODE, okay) || \
-    !DT_NODE_HAS_STATUS(LED_RIGHT_NODE, okay)
+#if !DT_NODE_HAS_STATUS(LED1_NODE, okay) || \
+    !DT_NODE_HAS_STATUS(LED2_NODE, okay)
 #error "led1, led2 aliases required for Pro3"
 #endif
 
-static const struct gpio_dt_spec led_left = GPIO_DT_SPEC_GET(LED_LEFT_NODE, gpios);
-static const struct gpio_dt_spec led_right = GPIO_DT_SPEC_GET(LED_RIGHT_NODE, gpios);
+static const struct gpio_dt_spec led1 = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+static const struct gpio_dt_spec led2 = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
+
+#if DT_NODE_HAS_STATUS(CHG_NODE, okay)
+static const struct gpio_dt_spec chg_pin = GPIO_DT_SPEC_GET(CHG_NODE, gpios);
+#define HAS_CHG_PIN 1
+#else
+#define HAS_CHG_PIN 0
+#endif
 
 /* State */
 static uint8_t profile_idx;
@@ -75,22 +84,36 @@ static bool blink_is_long;
 static bool blink_led_on;
 static bool sequence_active;
 
-/* Other indicators */
+/* Pairing indicator state */
+static bool pairing_led1_on;  /* Which LED is currently on during pairing */
 static bool pairing_active;
+
+/* Battery indicator */
 static bool battery_led_on;
 static bool low_battery;
 
-static void led_left_set(bool on) {
-    gpio_pin_configure_dt(&led_left, on ? GPIO_OUTPUT_HIGH : GPIO_DISCONNECTED);
+static void led1_set(bool on) {
+    gpio_pin_configure_dt(&led1, on ? GPIO_OUTPUT_HIGH : GPIO_DISCONNECTED);
 }
 
-static void led_right_set(bool on) {
-    gpio_pin_configure_dt(&led_right, on ? GPIO_OUTPUT_HIGH : GPIO_DISCONNECTED);
+static void led2_set(bool on) {
+    gpio_pin_configure_dt(&led2, on ? GPIO_OUTPUT_HIGH : GPIO_DISCONNECTED);
 }
 
-static void all_leds_set(bool on) {
-    led_left_set(on);
-    led_right_set(on);
+static void all_leds_off(void) {
+    led1_set(false);
+    led2_set(false);
+}
+
+static bool is_charging(void) {
+#if HAS_CHG_PIN
+    if (!device_is_ready(chg_pin.port)) {
+        return false;
+    }
+    return gpio_pin_get_dt(&chg_pin) > 0;
+#else
+    return false;
+#endif
 }
 
 /* Work items */
@@ -110,8 +133,12 @@ K_WORK_DELAYABLE_DEFINE(battery_led_work, battery_led_tick);
 static void start_profile_sequence(void) {
     if (is_asleep) return;
 
-    k_work_cancel_delayable(&profile_work);
+    /* Stop pairing animation during profile indication */
     k_work_cancel_delayable(&pairing_work);
+    pairing_active = false;
+    led2_set(false);
+
+    k_work_cancel_delayable(&profile_work);
 
     if (profile_idx <= 2) {
         blink_count = profile_idx + 1;
@@ -123,7 +150,7 @@ static void start_profile_sequence(void) {
 
     blink_led_on = true;
     sequence_active = true;
-    led_left_set(true);
+    led1_set(true);
 
     uint16_t on_time = blink_is_long ? LONG_BLINK_ON : SHORT_BLINK_ON;
     k_work_schedule(&profile_work, K_MSEC(on_time));
@@ -131,10 +158,10 @@ static void start_profile_sequence(void) {
 
 static void profile_tick(struct k_work *work) {
     if (is_asleep || !sequence_active) {
-        led_left_set(false);
+        led1_set(false);
         sequence_active = false;
         /* Resume pairing indicator if needed */
-        if (profile_open && !is_asleep) {
+        if (profile_open && !is_asleep && !usb_powered) {
             k_work_schedule(&pairing_work, K_MSEC(PAIRING_BLINK));
         }
         return;
@@ -145,13 +172,13 @@ static void profile_tick(struct k_work *work) {
 
     if (blink_led_on) {
         blink_led_on = false;
-        led_left_set(false);
+        led1_set(false);
         blink_count--;
 
         if (blink_count == 0) {
             sequence_active = false;
             /* Resume pairing indicator if needed */
-            if (profile_open && !is_asleep) {
+            if (profile_open && !is_asleep && !usb_powered) {
                 k_work_schedule(&pairing_work, K_MSEC(PAIRING_BLINK));
             }
             return;
@@ -160,17 +187,17 @@ static void profile_tick(struct k_work *work) {
         k_work_schedule(&profile_work, K_MSEC(off_time));
     } else {
         blink_led_on = true;
-        led_left_set(true);
+        led1_set(true);
         k_work_schedule(&profile_work, K_MSEC(on_time));
     }
 }
 
 /*
- * Pairing indicator on left LED - blinks while profile is open
+ * Pairing indicator - alternating LEDs while profile is open (advertising)
  */
 static bool should_show_pairing(void) {
     if (!profile_open) return false;
-    if (sequence_active) return false;  /* Don't interrupt profile sequence */
+    if (sequence_active) return false;
 #if IS_ENABLED(CONFIG_USB_DEVICE_STACK)
     if (usb_powered) return false;
 #endif
@@ -181,72 +208,88 @@ static void start_pairing_indicator(void) {
     if (is_asleep || !should_show_pairing()) return;
 
     pairing_active = true;
-    led_left_set(true);
+    pairing_led1_on = true;
+    led1_set(true);
+    led2_set(false);
     k_work_schedule(&pairing_work, K_MSEC(PAIRING_BLINK));
 }
 
 static void stop_pairing_indicator(void) {
     k_work_cancel_delayable(&pairing_work);
-    if (!sequence_active) {
-        led_left_set(false);
-    }
     pairing_active = false;
+    led1_set(false);
+    led2_set(false);
 }
 
 static void pairing_tick(struct k_work *work) {
     if (is_asleep || !should_show_pairing()) {
-        led_left_set(false);
+        all_leds_off();
         pairing_active = false;
         return;
     }
 
-    pairing_active = !pairing_active;
-    led_left_set(pairing_active);
+    /* Alternate between LED1 and LED2 */
+    pairing_led1_on = !pairing_led1_on;
+    led1_set(pairing_led1_on);
+    led2_set(!pairing_led1_on);
+
     k_work_schedule(&pairing_work, K_MSEC(PAIRING_BLINK));
 }
 
 /*
- * Battery indicator on right LED
+ * Battery indicator on LED2
+ * - Solid: USB connected and charging
+ * - Blinking: Low battery (not on USB)
+ * - Off: Normal operation or fully charged
  */
 static void update_battery_indicator(void);
 
 static void start_battery_indicator(void) {
     if (is_asleep) return;
+    /* Don't show battery during pairing animation */
+    if (pairing_active) return;
     k_work_schedule(&battery_led_work, K_NO_WAIT);
 }
 
 static void stop_battery_indicator(void) {
     k_work_cancel_delayable(&battery_led_work);
-    led_right_set(false);
+    /* Only turn off LED2 if not in pairing mode */
+    if (!pairing_active) {
+        led2_set(false);
+    }
     battery_led_on = false;
 }
 
 static void battery_led_tick(struct k_work *work) {
-    if (is_asleep) {
-        led_right_set(false);
+    if (is_asleep || pairing_active) {
         battery_led_on = false;
         return;
     }
 
-    if (usb_powered) {
-        /* USB connected: solid on */
-        led_right_set(true);
+    if (usb_powered && is_charging()) {
+        /* Charging: solid on */
+        led2_set(true);
         battery_led_on = true;
         k_work_schedule(&battery_led_work, K_MSEC(LOW_BATT_BLINK));
+    } else if (usb_powered) {
+        /* USB connected but not charging (full): off */
+        led2_set(false);
+        battery_led_on = false;
+        k_work_schedule(&battery_led_work, K_MSEC(LOW_BATT_BLINK));
     } else if (low_battery) {
-        /* Low battery: blink */
+        /* Low battery on BLE: blink */
         battery_led_on = !battery_led_on;
-        led_right_set(battery_led_on);
+        led2_set(battery_led_on);
         k_work_schedule(&battery_led_work, K_MSEC(LOW_BATT_BLINK));
     } else {
-        /* Normal: off */
-        led_right_set(false);
+        /* Normal operation: off */
+        led2_set(false);
         battery_led_on = false;
     }
 }
 
 static void update_battery_indicator(void) {
-    if (is_asleep) return;
+    if (is_asleep || pairing_active) return;
 
     if (usb_powered || low_battery) {
         start_battery_indicator();
@@ -269,6 +312,12 @@ static int on_ble_profile(const zmk_event_t *eh) {
 
     start_profile_sequence();
 
+    /* Pairing will resume after profile sequence completes */
+    if (!profile_open) {
+        stop_pairing_indicator();
+        update_battery_indicator();
+    }
+
     return ZMK_EV_EVENT_BUBBLE;
 }
 
@@ -281,14 +330,16 @@ static int on_activity(const zmk_event_t *eh) {
         k_work_cancel_delayable(&profile_work);
         k_work_cancel_delayable(&pairing_work);
         k_work_cancel_delayable(&battery_led_work);
-        all_leds_set(false);
+        all_leds_off();
         sequence_active = false;
+        pairing_active = false;
     } else if (ev->state == ZMK_ACTIVITY_ACTIVE) {
         is_asleep = false;
-        if (profile_open) {
+        if (profile_open && !usb_powered) {
             start_pairing_indicator();
+        } else {
+            update_battery_indicator();
         }
-        update_battery_indicator();
     }
 
     return ZMK_EV_EVENT_BUBBLE;
@@ -305,12 +356,15 @@ static int on_usb(const zmk_event_t *eh) {
     if (is_asleep) return ZMK_EV_EVENT_BUBBLE;
 
     if (usb_powered && !was_powered) {
-        update_battery_indicator();
+        /* USB just connected - stop pairing, show battery */
         stop_pairing_indicator();
-    } else if (!usb_powered && was_powered) {
         update_battery_indicator();
+    } else if (!usb_powered && was_powered) {
+        /* USB just disconnected - maybe start pairing */
         if (profile_open) {
             start_pairing_indicator();
+        } else {
+            update_battery_indicator();
         }
     }
 
@@ -340,7 +394,13 @@ static int on_battery(const zmk_event_t *eh) {
  * Init
  */
 static int whkb_pro3_led_init(void) {
-    all_leds_set(false);
+    all_leds_off();
+
+#if HAS_CHG_PIN
+    if (device_is_ready(chg_pin.port)) {
+        gpio_pin_configure_dt(&chg_pin, GPIO_INPUT);
+    }
+#endif
 
 #if IS_ENABLED(CONFIG_ZMK_BLE)
     profile_idx = zmk_ble_active_profile_index();
@@ -353,12 +413,12 @@ static int whkb_pro3_led_init(void) {
 
     is_asleep = (zmk_activity_get_state() == ZMK_ACTIVITY_SLEEP);
 
-    if (profile_open && !is_asleep) {
-        start_pairing_indicator();
-    }
-
     if (!is_asleep) {
-        update_battery_indicator();
+        if (profile_open && !usb_powered) {
+            start_pairing_indicator();
+        } else {
+            update_battery_indicator();
+        }
     }
 
     return 0;

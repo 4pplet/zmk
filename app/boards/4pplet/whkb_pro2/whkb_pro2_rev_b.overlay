@@ -8,6 +8,8 @@
  * Pin assignments:
  * P0.28 - ADXL362 power control (GPIO-switched VDD for clean POR on warm reboot)
  * P0.31 - BQ24075 Power Good (PGOOD) input
+ * P1.11 - MAX17048 Alert (active low, for future battery threshold alerts)
+ * P1.12 - User button (wake from sleep, bootloader entry)
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -31,7 +33,7 @@
         zmk,kscan = &kscan0;
         zmk,physical-layout = &physical_layout;
         zmk,battery = &fuelgauge;
-        zephyr,console = &cdc_acm_uart;
+        zmk,studio-rpc-uart = &cdc_acm_uart;
     };
 
     kscan0: kscan_0 {
@@ -185,12 +187,32 @@
         };
     };
 
+    /*
+     * User button - internal button for wake from sleep and bootloader entry
+     */
+    gpio_keys {
+        compatible = "gpio-keys";
+        user_button: user_button {
+            gpios = <&gpio1 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;  /* P1.12 */
+        };
+    };
+
+    /*
+     * Wake trigger - enables the user button to wake from soft-off/deep sleep
+     */
+    wakeup_button_trigger: wakeup_button_trigger {
+        compatible = "zmk,gpio-key-wakeup-trigger";
+        trigger = <&user_button>;
+        wakeup-source;
+    };
+
     aliases {
         led1 = &led_0;
         led2 = &led_1;
         led3 = &led_2;
         buzzer = &buzzer;
         chg-status = &chg_pin;
+        user-button = &user_button;
     };
 };
 
@@ -201,7 +223,7 @@
     pinctrl-names = "default", "sleep";
 };
 
-/* USB CDC ACM for logging */
+/* USB CDC ACM for ZMK Studio */
 &usbd {
     cdc_acm_uart: cdc_acm_uart {
         compatible = "zephyr,cdc-acm-uart";
@@ -242,8 +264,8 @@
             inactivity-time = <100>;
         };
         sleep {
-            activity-threshold = <50>;    /* Wake threshold: 50=sensitive, 75=default, 150=tap, 250=firm shake */
-            activity-time = <1>;          /* Require sustained movement (prevents false wake) */
+            activity-threshold = <47>;    /* Wake threshold: 50=sensitive, 75=default, 150=tap, 250=firm shake */
+            activity-time = <1>;          /* Require 80ms sustained movement */
             inactivity-threshold = <500>;
             inactivity-time = <0>;
         };
@@ -262,5 +284,6 @@
     fuelgauge: max17048@36 {
         compatible = "zmk,maxim-max17048";
         reg = <0x36>;
+        /* Alert pin connected to P1.11 (active low) - not used by driver yet */
     };
 };
