@@ -116,16 +116,21 @@ static void kscan_gpio_topre_work_handler(struct k_work *work) {
     const int matrix_rows = cfg->matrix_rows;
     const int matrix_cols = cfg->matrix_cols;
 
-    /* Power on everything - use raw gpio to match original driver */
-    gpio_pin_configure_dt(&cfg->key, GPIO_INPUT);
-    gpio_pin_set(cfg->strobe.port, cfg->strobe.pin, 1);
-    gpio_pin_set(cfg->power.port, cfg->power.pin, 1);
-
-    /* For JP, enable both row multiplexers (active low) */
-    if (cfg->is_jp) {
-        gpio_pin_set(cfg->row_enable_low.port, cfg->row_enable_low.pin, 0);
-        gpio_pin_set(cfg->row_enable_high.port, cfg->row_enable_high.pin, 0);
+    /* Reconfigure GPIOs as outputs (they were disconnected after last scan) */
+    for (int i = 0; i < SEL_PINS; ++i) {
+        gpio_pin_configure_dt(&cfg->bits[i], GPIO_OUTPUT_INACTIVE);
     }
+    gpio_pin_configure_dt(&cfg->hys, GPIO_OUTPUT_INACTIVE);
+    gpio_pin_configure_dt(&cfg->strobe, GPIO_OUTPUT_ACTIVE);  /* Strobe starts high */
+    gpio_pin_configure_dt(&cfg->key, GPIO_INPUT);
+
+    if (cfg->is_jp) {
+        gpio_pin_configure_dt(&cfg->row_enable_low, GPIO_OUTPUT_ACTIVE);   /* Active low - enable */
+        gpio_pin_configure_dt(&cfg->row_enable_high, GPIO_OUTPUT_ACTIVE);  /* Active low - enable */
+    }
+
+    /* Power on the HHKB board */
+    gpio_pin_set(cfg->power.port, cfg->power.pin, 1);
 
     /* Topre controller board needs time to be operational.
      * Original whkb-zmk-config driver uses 5ms. */
@@ -205,18 +210,21 @@ static void kscan_gpio_topre_work_handler(struct k_work *work) {
         }
     }
 
-    /* Set all gpio pins to low and power off the controller board to avoid
-     * current leakage. Use raw gpio to match original driver. */
-    for (int i = 0; i < SEL_PINS; ++i) {
-        gpio_pin_set(cfg->bits[i].port, cfg->bits[i].pin, 0);
-    }
-    gpio_pin_configure_dt(&cfg->key, GPIO_DISCONNECTED);
+    /* Power off the controller board and disconnect all GPIOs to prevent
+     * current leakage through the powered-off HHKB circuitry. */
     gpio_pin_set(cfg->power.port, cfg->power.pin, 0);
-    gpio_pin_set(cfg->strobe.port, cfg->strobe.pin, 0);
+
+    /* Disconnect all GPIO lines to HHKB board (high-impedance) */
+    gpio_pin_configure_dt(&cfg->key, GPIO_DISCONNECTED);
+    gpio_pin_configure_dt(&cfg->hys, GPIO_DISCONNECTED);
+    gpio_pin_configure_dt(&cfg->strobe, GPIO_DISCONNECTED);
+    for (int i = 0; i < SEL_PINS; ++i) {
+        gpio_pin_configure_dt(&cfg->bits[i], GPIO_DISCONNECTED);
+    }
 
     if (cfg->is_jp) {
-        gpio_pin_set(cfg->row_enable_low.port, cfg->row_enable_low.pin, 1);
-        gpio_pin_set(cfg->row_enable_high.port, cfg->row_enable_high.pin, 1);
+        gpio_pin_configure_dt(&cfg->row_enable_low, GPIO_DISCONNECTED);
+        gpio_pin_configure_dt(&cfg->row_enable_high, GPIO_DISCONNECTED);
     }
 
     for (int r = 0; r < matrix_rows; ++r) {

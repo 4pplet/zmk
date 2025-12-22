@@ -3,3 +3,9 @@ board:
   vendor: 4pplet
   socs:
     - name: nrf52840
+  revision:
+    format: custom
+    default: ansi
+    revisions:
+      - name: ansi
+      - name: jp

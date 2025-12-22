@@ -28,10 +28,17 @@ LOG_MODULE_REGISTER(whkb_pro2_power, CONFIG_LOG_DEFAULT_LEVEL);
 
 #define SLEEP_GUARD_INTERVAL_SEC 30
 
+/* Get wakeup_trigger device from devicetree if it exists */
+#define WAKEUP_TRIGGER_NODE DT_NODELABEL(wakeup_trigger)
+#if DT_NODE_EXISTS(WAKEUP_TRIGGER_NODE)
+static const struct device *wakeup_dev = DEVICE_DT_GET_OR_NULL(WAKEUP_TRIGGER_NODE);
+#else
+static const struct device *wakeup_dev = NULL;
+#endif
+
 static bool has_wakeup_source(void)
 {
-    const struct device *dev = device_get_binding("wakeup_trigger");
-    return (dev != NULL && device_is_ready(dev));
+    return (wakeup_dev != NULL && device_is_ready(wakeup_dev));
 }
 
 static void sleep_guard_work_handler(struct k_work *work);

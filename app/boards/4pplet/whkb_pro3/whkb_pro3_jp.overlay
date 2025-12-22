@@ -1,0 +1,179 @@
+/*
+ * Copyright (c) 2025 Stefan Sundin (4pplet)
+ * SPDX-License-Identifier: MIT
+ *
+ * WHKB Pro3 JP variant - 69 keys
+ *
+ * NOTE: The matrix transform below is a PLACEHOLDER.
+ * The actual RC(row, col) values need to be determined by probing the PCB
+ * to find which row/column each key is connected to.
+ *
+ * The physical layout matches the HHKB JP layout from Pro2 JP.
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+#include <physical_layouts.dtsi>
+
+/ {
+    model = "WHKB Pro3 JP";
+
+    chosen {
+        zmk,kscan = &kscan0;
+        zmk,physical-layout = &physical_layout;
+    };
+
+    kscan0: kscan_0 {
+        compatible = "zmk,kscan-topre-adc";
+        status = "okay";
+
+        /* Row drive pins - same as ANSI, JP uses same 4 rows */
+        row-gpios = <&gpio0 26 GPIO_ACTIVE_HIGH>,   /* ROW0 */
+                    <&gpio0 27 GPIO_ACTIVE_HIGH>,   /* ROW1 */
+                    <&gpio0 4  GPIO_ACTIVE_HIGH>,   /* ROW2 */
+                    <&gpio0 5  GPIO_ACTIVE_HIGH>;   /* ROW3 */
+
+        /* Column select pins (address HC4051 muxes) */
+        col-sel-gpios = <&gpio0 6  GPIO_ACTIVE_HIGH>,   /* COL_A */
+                        <&gpio0 7  GPIO_ACTIVE_HIGH>,   /* COL_B */
+                        <&gpio0 8  GPIO_ACTIVE_HIGH>;   /* COL_C */
+
+        /* Mux enable pins - JP may need different mux configuration for extra keys */
+        u1-en-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;  /* U1 enable (cols 0-7) */
+        u2-en-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;  /* U2 enable (cols 8-14+) */
+
+        /* OpAmp control */
+        opamp-en-gpios = <&gpio0 14 GPIO_ACTIVE_HIGH>;
+        discharge-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+
+        /* ADC sense input */
+        io-channels = <&adc 0>;  /* AIN0 = P0.02 */
+
+        /* Power control for switch board */
+        power-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+
+        /* Sensing parameters */
+        actuation-threshold-mv = <1000>;  /* mV threshold for key press */
+
+        /* Timing parameters (microseconds) */
+        row-drive-us = <20>;
+        row-settle-us = <80>;
+        opamp-settle-us = <22>;
+        discharge-us = <7>;
+    };
+
+    /*
+     * HHKB JP Layout - 69 keys
+     * Matrix is 4 rows x 18 columns (or similar - needs PCB verification)
+     *
+     * TODO: Replace placeholder RC() values with actual matrix positions
+     * determined by probing the Pro3 JP PCB.
+     *
+     * The placeholder below assumes a simple sequential layout which is
+     * almost certainly WRONG. Each RC(row, col) must be mapped to the
+     * actual physical connection on the PCB.
+     */
+    default_transform: keymap_transform_0 {
+        compatible = "zmk,matrix-transform";
+        columns = <18>;  /* JP has more columns than ANSI */
+        rows = <4>;
+        map = <
+        /* Row 0: Esc  1    2    3    4    5    6    7    8    9    0    -    ^   Yen  Bksp (15 keys) */
+        RC(0,0) RC(0,1) RC(0,2) RC(0,3) RC(0,4) RC(0,5) RC(0,6) RC(0,7) RC(0,8) RC(0,9) RC(0,10) RC(0,11) RC(0,12) RC(0,13) RC(0,14)
+        /* Row 1: Tab  Q    W    E    R    T    Y    U    I    O    P    @    [ (13 keys, Enter spans rows) */
+        RC(1,0) RC(1,1) RC(1,2) RC(1,3) RC(1,4) RC(1,5) RC(1,6) RC(1,7) RC(1,8) RC(1,9) RC(1,10) RC(1,11) RC(1,12)
+        /* Row 2: Ctrl A    S    D    F    G    H    J    K    L    ;    :    ]   Enter (14 keys) */
+        RC(2,0) RC(2,1) RC(2,2) RC(2,3) RC(2,4) RC(2,5) RC(2,6) RC(2,7) RC(2,8) RC(2,9) RC(2,10) RC(2,11) RC(2,12) RC(2,13)
+        /* Row 3: Shift Z    X    C    V    B    N    M    ,    .    /    \   Shift Up (14 keys) */
+        RC(3,0) RC(3,1) RC(3,2) RC(3,3) RC(3,4) RC(3,5) RC(3,6) RC(3,7) RC(3,8) RC(3,9) RC(3,10) RC(3,11) RC(3,12) RC(3,13)
+        /* Row 4: Fn   Zen  Meta Mhen key  Space Henk Kana Meta Fn   Left Down Right (13 keys) */
+        RC(0,15) RC(0,16) RC(0,17) RC(1,13) RC(1,14) RC(1,15) RC(1,16) RC(1,17) RC(2,14) RC(2,15) RC(2,16) RC(2,17) RC(3,14)
+        >;
+    };
+
+    physical_layout: physical_layout_0 {
+        compatible = "zmk,physical-layout";
+        display-name = "HHKB JP";
+        transform = <&default_transform>;
+        keys = <
+            /* Row 0: 15 keys (Esc through Backspace) */
+            &key_physical_attrs 100 100 0   0   0 0 0
+            &key_physical_attrs 100 100 100 0   0 0 0
+            &key_physical_attrs 100 100 200 0   0 0 0
+            &key_physical_attrs 100 100 300 0   0 0 0
+            &key_physical_attrs 100 100 400 0   0 0 0
+            &key_physical_attrs 100 100 500 0   0 0 0
+            &key_physical_attrs 100 100 600 0   0 0 0
+            &key_physical_attrs 100 100 700 0   0 0 0
+            &key_physical_attrs 100 100 800 0   0 0 0
+            &key_physical_attrs 100 100 900 0   0 0 0
+            &key_physical_attrs 100 100 1000 0  0 0 0
+            &key_physical_attrs 100 100 1100 0  0 0 0
+            &key_physical_attrs 100 100 1200 0  0 0 0
+            &key_physical_attrs 100 100 1300 0  0 0 0
+            &key_physical_attrs 100 100 1400 0  0 0 0
+            /* Row 1: 13 keys (Tab through [, Enter top is part of row 2) */
+            &key_physical_attrs 150 100 0   100 0 0 0
+            &key_physical_attrs 100 100 150 100 0 0 0
+            &key_physical_attrs 100 100 250 100 0 0 0
+            &key_physical_attrs 100 100 350 100 0 0 0
+            &key_physical_attrs 100 100 450 100 0 0 0
+            &key_physical_attrs 100 100 550 100 0 0 0
+            &key_physical_attrs 100 100 650 100 0 0 0
+            &key_physical_attrs 100 100 750 100 0 0 0
+            &key_physical_attrs 100 100 850 100 0 0 0
+            &key_physical_attrs 100 100 950 100 0 0 0
+            &key_physical_attrs 100 100 1050 100 0 0 0
+            &key_physical_attrs 100 100 1150 100 0 0 0
+            &key_physical_attrs 100 100 1250 100 0 0 0
+            /* Row 2: 14 keys (Ctrl through Enter - ISO-style vertical Enter) */
+            &key_physical_attrs 175 100 0   200 0 0 0
+            &key_physical_attrs 100 100 175 200 0 0 0
+            &key_physical_attrs 100 100 275 200 0 0 0
+            &key_physical_attrs 100 100 375 200 0 0 0
+            &key_physical_attrs 100 100 475 200 0 0 0
+            &key_physical_attrs 100 100 575 200 0 0 0
+            &key_physical_attrs 100 100 675 200 0 0 0
+            &key_physical_attrs 100 100 775 200 0 0 0
+            &key_physical_attrs 100 100 875 200 0 0 0
+            &key_physical_attrs 100 100 975 200 0 0 0
+            &key_physical_attrs 100 100 1075 200 0 0 0
+            &key_physical_attrs 100 100 1175 200 0 0 0
+            &key_physical_attrs 100 100 1275 200 0 0 0
+            &key_physical_attrs 150 200 1375 100 0 0 0
+            /* Row 3: 14 keys (LShift 2u, 11 alpha keys, \, RShift, Up) */
+            &key_physical_attrs 200 100 0    300 0 0 0   /* LShift w:2 */
+            &key_physical_attrs 100 100 200  300 0 0 0   /* Z */
+            &key_physical_attrs 100 100 300  300 0 0 0   /* X */
+            &key_physical_attrs 100 100 400  300 0 0 0   /* C */
+            &key_physical_attrs 100 100 500  300 0 0 0   /* V */
+            &key_physical_attrs 100 100 600  300 0 0 0   /* B */
+            &key_physical_attrs 100 100 700  300 0 0 0   /* N */
+            &key_physical_attrs 100 100 800  300 0 0 0   /* M */
+            &key_physical_attrs 100 100 900  300 0 0 0   /* , */
+            &key_physical_attrs 100 100 1000 300 0 0 0   /* . */
+            &key_physical_attrs 100 100 1100 300 0 0 0   /* / */
+            &key_physical_attrs 100 100 1200 300 0 0 0   /* \ */
+            &key_physical_attrs 100 100 1300 300 0 0 0   /* RShift */
+            &key_physical_attrs 100 100 1400 300 0 0 0   /* Up arrow */
+            /* Row 4: 13 keys - bottom row with arrow cluster (Left, Down, Right) */
+            &key_physical_attrs 100 100 0    400 0 0 0   /* Fn */
+            &key_physical_attrs 100 100 125  400 0 0 0   /* Zen */
+            &key_physical_attrs 100 100 225  400 0 0 0   /* Meta */
+            &key_physical_attrs 100 100 325  400 0 0 0   /* Muhen */
+            &key_physical_attrs 100 100 425  400 0 0 0   /* key */
+            &key_physical_attrs 250 100 525  400 0 0 0   /* Space w:2.5 */
+            &key_physical_attrs 100 100 775  400 0 0 0   /* Henkan */
+            &key_physical_attrs 100 100 875  400 0 0 0   /* Kana */
+            &key_physical_attrs 100 100 975  400 0 0 0   /* Meta */
+            &key_physical_attrs 100 100 1075 400 0 0 0   /* Fn */
+            &key_physical_attrs 100 100 1200 400 0 0 0   /* Left */
+            &key_physical_attrs 100 100 1300 400 0 0 0   /* Down */
+            &key_physical_attrs 100 100 1400 400 0 0 0   /* Right */
+        >;
+    };
+};
+
+/* Link accelerometer wake to kscan */
+&wakeup_trigger {
+    linked-devices = <&kscan0>;
+};
