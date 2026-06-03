@@ -7,9 +7,14 @@
 /*
  * Pin assignments:
  * P0.28 - ADXL362 power control (GPIO-switched VDD for clean POR on warm reboot)
- * P0.31 - BQ24075 Power Good (PGOOD) input
- * P1.11 - MAX17048 Alert (active low, for future battery threshold alerts)
- * P1.12 - User button (wake from sleep, bootloader entry)
+ *
+ * Reserved for future implementation (present on PCB, not yet used by firmware):
+ * P0.09 - BL_LED backlight LED control (NFC1, freed via CONFIG_NFCT_PINS_AS_GPIOS)
+ * P0.31 - BQ24075 Power Good (PGOOD) input (active low when input power present)
+ * P1.11 - MAX17048 Alert (active low, battery threshold alerts)
+ *
+ * P1.13 - Wake button (dedicated button to wake from sleep/soft-off)
+ * P1.12 - Bootloader entry button (small PCB button, handled by bootloader - not used by firmware)
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -176,9 +181,14 @@
             gpios = <&gpio1 6 GPIO_ACTIVE_HIGH>;  /* P1.06 */
             status = "okay";
         };
+        /* TODO: BL_LED backlight on P0.09 (gpio0 9, NFC1) - add node + driver to implement */
     };
 
-    /* BQ24075 charger status input - active low when charging */
+    /*
+     * BQ24075 charger status - CHG (P0.30) active low when charging.
+     * TODO: PGOOD on P0.31 (gpio0 31, active low when input power present) is also
+     * available - add an input + handling to implement.
+     */
     charger_status {
         compatible = "gpio-keys";
         chg_pin: chg_pin {
@@ -188,21 +198,23 @@
     };
 
     /*
-     * User button - internal button for wake from sleep and bootloader entry
+     * Wake button (P1.13) - dedicated button to wake from sleep/soft-off.
+     * Bootloader entry is a separate PCB button on P1.12, handled by the
+     * bootloader, so it is not defined here.
      */
     gpio_keys {
         compatible = "gpio-keys";
-        user_button: user_button {
-            gpios = <&gpio1 12 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;  /* P1.12 */
+        wake_button: wake_button {
+            gpios = <&gpio1 13 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;  /* P1.13 */
         };
     };
 
     /*
-     * Wake trigger - enables the user button to wake from soft-off/deep sleep
+     * Wake trigger - enables the wake button to wake from soft-off/deep sleep
      */
     wakeup_button_trigger: wakeup_button_trigger {
         compatible = "zmk,gpio-key-wakeup-trigger";
-        trigger = <&user_button>;
+        trigger = <&wake_button>;
         wakeup-source;
     };
 
@@ -212,7 +224,7 @@
         led3 = &led_2;
         buzzer = &buzzer;
         chg-status = &chg_pin;
-        user-button = &user_button;
+        wake-button = &wake_button;
     };
 };
 
@@ -284,6 +296,6 @@
     fuelgauge: max17048@36 {
         compatible = "zmk,maxim-max17048";
         reg = <0x36>;
-        /* Alert pin connected to P1.11 (active low) - not used by driver yet */
+        /* TODO: ALERT on P1.11 (gpio1 11, active low) - not used by driver yet */
     };
 };
